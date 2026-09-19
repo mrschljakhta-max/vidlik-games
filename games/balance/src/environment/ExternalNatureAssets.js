@@ -125,7 +125,7 @@ function recolorFoliage(root, mode = 'green') {
     if (material.color) {
       if (mode === 'green') {
         // Force all foliage into one coherent sage/olive palette.
-        material.color.setHex(0x6f9f4f);
+        material.color.setHex(0x78a957);
       } else if (mode === 'light') {
         // Replaces the loud red flower accents with muted warm cream.
         material.color.setHex(0xd8d0a8);
@@ -281,13 +281,6 @@ function addBushes(target, common, flowers) {
     });
   });
 
-  // One restrained warm accent instead of several loud red bushes.
-  place(target, flowers, {
-    position: [.82, .10, -1.84],
-    size: .34,
-    rotation: [0, .8, 0],
-    transform: (object) => recolorFoliage(object, 'light'),
-  });
 }
 
 function addGrass(target, tall, wispy) {
