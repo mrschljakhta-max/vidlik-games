@@ -246,8 +246,8 @@ scene.add(exit);
 
 const path = {
   corePickup: new THREE.Vector3(-1.55, .90, 1.62),
-  generatorApproach: new THREE.Vector3(.02, .90, 1.48),
-  doorLane: new THREE.Vector3(2.55, .90, 1.62),
+  generatorApproach: new THREE.Vector3(-.15, .90, 1.78),
+  doorLane: new THREE.Vector3(2.65, .90, 2.25),
   doorApproach: new THREE.Vector3(3.45, .90, -.10),
   doorPass: new THREE.Vector3(3.45, .90, -1.62),
   exit: new THREE.Vector3(3.45, .90, -2.15),
