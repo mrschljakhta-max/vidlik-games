@@ -263,6 +263,114 @@ function createSoftEdgeStones(group, materials, rand) {
   });
 }
 
+
+function createNativeCliffMass(group, materials, rand) {
+  const warmRock = materials.rock.clone();
+  warmRock.map = null;
+  warmRock.bumpMap = null;
+  warmRock.roughnessMap = null;
+  warmRock.color.setHex(0x8e806f);
+  warmRock.roughness = .98;
+  warmRock.metalness = 0;
+
+  const darkRock = materials.rockDark.clone();
+  darkRock.map = null;
+  darkRock.bumpMap = null;
+  darkRock.roughnessMap = null;
+  darkRock.color.setHex(0x5d554b);
+  darkRock.roughness = 1;
+  darkRock.metalness = 0;
+
+  // A guaranteed, local cliff silhouette. It does not depend on remote GLTFs.
+  const upper = [
+    [-2.92, -.62, 1.20, 1.16, .82, 1.00, .20],
+    [-1.90, -.70, 1.34, 1.28, .94, 1.08, .85],
+    [-.72, -.72, 1.24, 1.34, 1.02, 1.12, 1.55],
+    [.55, -.72, 1.20, 1.38, 1.00, 1.12, 2.15],
+    [1.82, -.68, 1.05, 1.24, .92, 1.04, 2.75],
+    [2.80, -.60, .75, 1.06, .78, .94, 3.35],
+    [-2.88, -.64, -.92, 1.10, .82, 1.00, 1.00],
+    [-1.75, -.72, -1.18, 1.30, .96, 1.10, 1.65],
+    [-.42, -.76, -1.22, 1.38, 1.04, 1.16, 2.30],
+    [.92, -.74, -1.18, 1.34, 1.00, 1.12, 2.90],
+    [2.15, -.68, -.98, 1.20, .88, 1.02, 3.45],
+    [2.95, -.60, -.55, 1.02, .76, .92, 4.00],
+  ];
+
+  upper.forEach(([x, y, z, sx, sy, sz, yaw], index) => {
+    const rock = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(1, 1),
+      index % 4 === 0 ? darkRock : warmRock,
+    );
+
+    rock.scale.set(sx, sy, sz);
+    rock.position.set(
+      x + (rand() - .5) * .10,
+      y + (rand() - .5) * .08,
+      z + (rand() - .5) * .10,
+    );
+    rock.rotation.set(
+      (rand() - .5) * .18,
+      yaw + (rand() - .5) * .22,
+      (rand() - .5) * .14,
+    );
+    rock.castShadow = true;
+    rock.receiveShadow = true;
+    group.add(rock);
+  });
+
+  const lower = [
+    [-2.25, -1.42, .66, .90, 1.38, .82, .35],
+    [-1.05, -1.60, .58, 1.02, 1.58, .92, 1.20],
+    [.22, -1.70, .48, 1.08, 1.72, .96, 2.10],
+    [1.48, -1.54, .40, .96, 1.52, .88, 2.85],
+    [2.42, -1.34, .26, .82, 1.26, .76, 3.55],
+    [-1.92, -1.48, -.58, .88, 1.42, .82, 1.00],
+    [-.66, -1.68, -.52, 1.02, 1.66, .92, 1.85],
+    [.72, -1.66, -.48, 1.04, 1.62, .94, 2.65],
+    [1.92, -1.44, -.40, .88, 1.36, .82, 3.35],
+  ];
+
+  lower.forEach(([x, y, z, sx, sy, sz, yaw], index) => {
+    const rock = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(1, 0),
+      index % 3 === 0 ? warmRock : darkRock,
+    );
+
+    rock.scale.set(sx, sy, sz);
+    rock.position.set(x, y, z);
+    rock.rotation.set(
+      .08 + (rand() - .5) * .16,
+      yaw,
+      (rand() - .5) * .16,
+    );
+    rock.castShadow = true;
+    rock.receiveShadow = true;
+    group.add(rock);
+  });
+
+  // A tapered central keel gives the island the recognizable floating-rock drop.
+  const keel = new THREE.Mesh(
+    new THREE.CylinderGeometry(.34, 1.18, 2.25, 7, 1, false),
+    darkRock,
+  );
+  keel.position.set(-.10, -2.12, .02);
+  keel.rotation.y = .28;
+  keel.castShadow = true;
+  keel.receiveShadow = true;
+  group.add(keel);
+
+  const tip = new THREE.Mesh(
+    new THREE.ConeGeometry(.58, 1.18, 7),
+    darkRock,
+  );
+  tip.position.set(-.08, -3.38, .02);
+  tip.rotation.y = -.22;
+  tip.castShadow = true;
+  tip.receiveShadow = true;
+  group.add(tip);
+}
+
 function createStonePath(group, material, rand) {
   const pathPoints = [
     [-3.0, .20],
@@ -441,6 +549,10 @@ export function createFloatingIsland(baseMaterials) {
 
   island.add(createIslandBody(materials));
   island.add(createGrassCap(materials));
+
+  // Native cliff is rendered synchronously, so the island never becomes
+  // a thin floating plate if external nature assets fail or load slowly.
+  createNativeCliffMass(island, materials, rand);
 
   createSurfaceVariation(island);
   createSoftEdgeStones(island, materials, rand);

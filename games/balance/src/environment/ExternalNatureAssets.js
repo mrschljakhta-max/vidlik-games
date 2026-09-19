@@ -380,7 +380,8 @@ export async function addExternalNatureAssets(scene, materials) {
   ].filter(Boolean);
 
   if (rocks.length) {
-    addCliffSilhouette(root, rocks, materials);
+    // The main cliff mass is now local/procedural in FloatingIsland.js
+    // so it cannot disappear when remote GLTF assets fail.
     addSurfaceRocks(root, rocks, materials);
   }
 
