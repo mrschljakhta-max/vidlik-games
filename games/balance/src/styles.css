@@ -1,20 +1,305 @@
 * { box-sizing: border-box; }
-html, body, #app { width: 100%; height: 100%; margin: 0; }
-body { overflow: hidden; font-family: Inter, system-ui, sans-serif; color: #f4f8fb; background: #07111f; }
-.game-shell, .scene { position: relative; width: 100%; height: 100%; }
-.scene canvas { display: block; width: 100%; height: 100%; }
-.hud { position: absolute; z-index: 10; left: 18px; right: 18px; top: 18px; display: flex; justify-content: space-between; pointer-events: none; }
-.panel { background: rgba(8,20,36,.82); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(16px); border-radius: 18px; box-shadow: 0 18px 50px rgba(0,0,0,.22); }
-.brand, .level-status { padding: 13px 16px; }
-.brand strong { display: block; letter-spacing: .24em; font-size: 18px; }
-.brand span, .level-status span { display: block; color: #9fb5c9; font-size: 12px; margin-top: 4px; }
-.level-status { text-align: right; }
-.mission { position: absolute; z-index: 10; left: 18px; bottom: 18px; width: min(410px, calc(100vw - 36px)); padding: 15px 17px; pointer-events: none; }
-.mission small { color: #ffb028; font-weight: 900; letter-spacing: .12em; }
-.mission h1 { font-size: 19px; margin: 7px 0 5px; }
-.mission p { color: #b7c9d9; font-size: 13px; margin: 0; }
-@media (max-width: 600px) {
-  .hud { left: 10px; right: 10px; top: 10px; }
-  .mission { left: 10px; bottom: 10px; }
-  .brand span { display: none; }
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #f4f8fb;
+  background: #07111f;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.game-shell,
+.scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.scene canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hud {
+  position: absolute;
+  z-index: 20;
+  left: 18px;
+  right: 18px;
+  top: 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  pointer-events: none;
+}
+
+.panel {
+  background:
+    linear-gradient(180deg, rgba(12, 30, 51, .90), rgba(6, 18, 33, .86));
+  border: 1px solid rgba(160, 210, 239, .16);
+  backdrop-filter: blur(18px);
+  border-radius: 18px;
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, .24),
+    inset 0 1px 0 rgba(255, 255, 255, .03);
+}
+
+.brand,
+.level-status {
+  padding: 13px 16px;
+}
+
+.brand strong {
+  display: block;
+  letter-spacing: .24em;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.brand span,
+.level-status span {
+  display: block;
+  color: #9fb5c9;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.level-status {
+  min-width: 128px;
+  text-align: right;
+}
+
+.level-status strong {
+  font-size: 14px;
+}
+
+.mission {
+  position: absolute;
+  z-index: 20;
+  left: 18px;
+  bottom: 18px;
+  width: min(410px, calc(100vw - 36px));
+  padding: 16px 18px;
+  pointer-events: none;
+}
+
+.mission small {
+  color: #ffb028;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+.mission h1 {
+  font-size: 19px;
+  line-height: 1.15;
+  margin: 8px 0 6px;
+}
+
+.mission p {
+  color: #b7c9d9;
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.restart {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 22;
+  min-width: 108px;
+  height: 46px;
+  padding: 0 16px;
+  border: 1px solid rgba(160, 210, 239, .18);
+  border-radius: 14px;
+  color: #eef9ff;
+  background: rgba(8, 22, 39, .86);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .22);
+  cursor: pointer;
+  font-weight: 800;
+  transition:
+    transform .18s ease,
+    background .18s ease,
+    border-color .18s ease;
+}
+
+.restart:hover {
+  transform: translateY(-2px);
+  background: rgba(15, 38, 62, .92);
+  border-color: rgba(103, 231, 255, .35);
+}
+
+.complete {
+  position: absolute;
+  z-index: 30;
+  left: 50%;
+  top: 50%;
+  width: min(430px, calc(100vw - 36px));
+  padding: 22px 24px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -47%) scale(.96);
+  transition:
+    opacity .28s ease,
+    transform .32s cubic-bezier(.2, .8, .2, 1);
+}
+
+.complete.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.complete__eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  color: #68e8ff;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .18em;
+}
+
+.complete strong {
+  display: block;
+  font-size: 25px;
+  letter-spacing: .03em;
+}
+
+.complete > span:last-child {
+  display: block;
+  margin-top: 8px;
+  color: #a9c6d8;
+  font-size: 14px;
+}
+
+.world-tag {
+  position: absolute;
+  z-index: 16;
+  min-width: 114px;
+  padding: 9px 11px;
+  border: 1px solid rgba(160, 210, 239, .16);
+  border-radius: 12px;
+  color: #f2f9ff;
+  background: rgba(6, 17, 31, .88);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .20);
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+  transition:
+    opacity .18s ease,
+    border-color .2s ease,
+    box-shadow .2s ease;
+}
+
+.world-tag strong {
+  display: block;
+  font-size: 15px;
+  line-height: 1.05;
+}
+
+.world-tag span {
+  display: block;
+  margin-top: 4px;
+  color: #9fb8ca;
+  font-size: 11px;
+  line-height: 1.1;
+}
+
+.world-tag--cyan {
+  border-color: rgba(92, 229, 255, .42);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, .20),
+    0 0 24px rgba(56, 212, 255, .08);
+}
+
+.world-tag--active {
+  border-color: rgba(95, 231, 255, .70);
+  animation: tagPulse 1.45s ease-in-out infinite;
+}
+
+.world-tag--hidden {
+  opacity: 0 !important;
+}
+
+@keyframes tagPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 10px 28px rgba(0, 0, 0, .20),
+      0 0 0 0 rgba(80, 221, 255, 0);
+  }
+
+  50% {
+    box-shadow:
+      0 10px 28px rgba(0, 0, 0, .20),
+      0 0 0 6px rgba(80, 221, 255, .10),
+      0 0 24px rgba(80, 221, 255, .12);
+  }
+}
+
+@media (max-width: 700px) {
+  .hud {
+    left: 10px;
+    right: 10px;
+    top: 10px;
+  }
+
+  .brand,
+  .level-status {
+    padding: 11px 13px;
+  }
+
+  .brand span {
+    display: none;
+  }
+
+  .mission {
+    left: 10px;
+    bottom: 10px;
+    width: min(350px, calc(100vw - 120px));
+    padding: 13px 14px;
+  }
+
+  .mission h1 {
+    font-size: 16px;
+  }
+
+  .mission p {
+    font-size: 12px;
+  }
+
+  .restart {
+    right: 10px;
+    bottom: 10px;
+    min-width: 96px;
+    height: 44px;
+  }
+
+  .world-tag {
+    min-width: 94px;
+    padding: 7px 9px;
+  }
+
+  .world-tag strong {
+    font-size: 13px;
+  }
+
+  .world-tag span {
+    font-size: 10px;
+  }
 }
