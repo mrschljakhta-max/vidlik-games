@@ -122,20 +122,20 @@ export function createGenerator(materials) {
   group.name = 'BalanceGenerator';
 
   const stone = materials.stone.clone();
-  stone.color.setHex(0xa99d87);
+  stone.color.setHex(0x81786c);
   stone.roughness = .94;
 
   const stoneDark = materials.rockDark.clone();
-  stoneDark.color.setHex(0x635f58);
+  stoneDark.color.setHex(0x514d48);
   stoneDark.roughness = .96;
 
   const metal = materials.dark.clone();
-  metal.color.setHex(0x1b242b);
+  metal.color.setHex(0x111a20);
   metal.roughness = .34;
   metal.metalness = .72;
 
   const brass = materials.gold.clone();
-  brass.color.setHex(0xc98b37);
+  brass.color.setHex(0xb8792f);
   brass.emissive.setHex(0x6b3a06);
   brass.emissiveIntensity = .18;
   brass.metalness = .64;
@@ -206,7 +206,7 @@ export function createGenerator(materials) {
   basinInner.position.y = 1.10;
 
   const slotMaterial = materials.cyan.clone();
-  slotMaterial.emissiveIntensity = 4.4;
+  slotMaterial.emissiveIntensity = 5.8;
 
   const slot = new THREE.Mesh(
     new THREE.CylinderGeometry(.42, .42, .10, 36),
@@ -215,7 +215,7 @@ export function createGenerator(materials) {
   slot.position.y = 1.14;
 
   const haloMaterial = materials.cyanLine.clone();
-  haloMaterial.emissiveIntensity = 4.0;
+  haloMaterial.emissiveIntensity = 5.4;
 
   const halo = new THREE.Mesh(
     new THREE.TorusGeometry(.68, .032, 12, 72),
@@ -317,7 +317,7 @@ export function createGenerator(materials) {
   });
 
   const pipeGlow = materials.cyanLine.clone();
-  pipeGlow.emissiveIntensity = 3.6;
+  pipeGlow.emissiveIntensity = 5.2;
 
   const pipeAngles = [-2.55, -1.35, -.20, .95];
 
@@ -348,7 +348,7 @@ export function createGenerator(materials) {
     group.add(pipe);
 
     const glow = new THREE.Mesh(
-      new THREE.TubeGeometry(curve, 18, .025, 6, false),
+      new THREE.TubeGeometry(curve, 18, .040, 8, false),
       pipeGlow,
     );
     group.add(glow);

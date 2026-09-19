@@ -131,6 +131,7 @@ function createSmoothGrassMaterial(materials) {
   grass.color.setHex(0xffffff);
   grass.roughness = .92;
   grass.metalness = 0;
+  grass.side = THREE.DoubleSide;
   grass.needsUpdate = true;
 
   return grass;
@@ -175,7 +176,7 @@ function createGrassCap(materials) {
 
   // Lift the grass very slightly above the earth body to avoid z-fighting
   // and guarantee that the top reads as grass.
-  cap.position.y = .105;
+  cap.position.y = .125;
   cap.name = 'IslandGrassCap';
   cap.receiveShadow = true;
 
@@ -755,10 +756,8 @@ export function createFloatingIsland(baseMaterials) {
 
   createLocalCliffMass(island, materials, rand);
 
-  createSurfaceVariation(island);
   createSoftEdgeStones(island, materials, rand);
   createStonePath(island, materials.path, rand);
-  createRuinClusters(island, materials, rand);
   createDoorFoundation(island, materials);
   createGeneratorFoundation(island, materials);
 
