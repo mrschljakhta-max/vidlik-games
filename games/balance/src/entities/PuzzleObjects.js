@@ -120,64 +120,165 @@ export function createCorePedestal(materials, value = 2) {
 export function createGenerator(materials) {
   const group = new THREE.Group();
 
-  const base = new THREE.Mesh(
-    new THREE.CylinderGeometry(.90, 1.05, .34, 40),
-    materials.dark,
-  );
-  base.position.y = .05;
-  base.castShadow = true;
-
-  const body = new THREE.Mesh(
-    new THREE.CylinderGeometry(.72, .80, .82, 40),
+  const basePlate = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.28, 1.42, .22, 48),
     materials.stone,
   );
-  body.position.y = .58;
-  body.castShadow = true;
+  basePlate.position.y = .10;
+  basePlate.castShadow = true;
+  basePlate.receiveShadow = true;
 
-  const top = new THREE.Mesh(
-    new THREE.TorusGeometry(.56, .14, 18, 48),
+  const lowerRing = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.02, 1.12, .30, 48),
     materials.dark,
   );
-  top.rotation.x = Math.PI / 2;
-  top.position.y = 1;
+  lowerRing.position.y = .28;
+  lowerRing.castShadow = true;
+
+  const body = new THREE.Mesh(
+    new THREE.CylinderGeometry(.82, .90, .70, 40),
+    materials.stone,
+  );
+  body.position.y = .68;
+  body.castShadow = true;
+
+  const topBasin = new THREE.Mesh(
+    new THREE.CylinderGeometry(.72, .82, .18, 40),
+    materials.dark,
+  );
+  topBasin.position.y = 1.05;
+  topBasin.castShadow = true;
+
+  const basinInner = new THREE.Mesh(
+    new THREE.CylinderGeometry(.49, .53, .08, 36),
+    materials.white,
+  );
+  basinInner.position.y = 1.10;
 
   const slotMaterial = materials.cyan.clone();
-  slotMaterial.emissiveIntensity = 2.4;
+  slotMaterial.emissiveIntensity = 2.8;
 
   const slot = new THREE.Mesh(
-    new THREE.CylinderGeometry(.42, .42, .16, 40),
+    new THREE.CylinderGeometry(.38, .38, .12, 36),
     slotMaterial,
   );
-  slot.position.y = 1.02;
+  slot.position.y = 1.14;
 
   const haloMaterial = materials.cyanLine.clone();
   const halo = new THREE.Mesh(
-    new THREE.TorusGeometry(.66, .035, 12, 64),
+    new THREE.TorusGeometry(.67, .035, 12, 64),
     haloMaterial,
   );
   halo.rotation.x = Math.PI / 2;
-  halo.position.y = 1.08;
+  halo.position.y = 1.18;
 
   const innerHalo = new THREE.Mesh(
-    new THREE.TorusGeometry(.49, .018, 10, 56),
+    new THREE.TorusGeometry(.48, .018, 10, 56),
     haloMaterial.clone(),
   );
   innerHalo.rotation.x = Math.PI / 2;
-  innerHalo.position.y = 1.095;
+  innerHalo.position.y = 1.19;
 
-  const light = new THREE.PointLight(0x4ee5ff, 0, 4.2, 2);
-  light.position.y = 1.15;
+  const energyColumn = new THREE.Mesh(
+    new THREE.CylinderGeometry(.16, .24, .30, 24, 1, true),
+    new THREE.MeshBasicMaterial({
+      color: 0x8ff4ff,
+      transparent: true,
+      opacity: .42,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+    }),
+  );
+  energyColumn.position.y = 1.32;
 
-  group.add(base, body, top, slot, halo, innerHalo, light);
+  const light = new THREE.PointLight(0x4ee5ff, 0, 5, 2);
+  light.position.y = 1.35;
+
+  group.add(
+    basePlate,
+    lowerRing,
+    body,
+    topBasin,
+    basinInner,
+    slot,
+    halo,
+    innerHalo,
+    energyColumn,
+    light,
+  );
+
+  for (let i = 0; i < 8; i += 1) {
+    const angle = (i / 8) * Math.PI * 2;
+
+    const segment = new THREE.Mesh(
+      new THREE.BoxGeometry(.42, .26, .34),
+      i % 2 === 0 ? materials.stone : materials.dark,
+    );
+    segment.position.set(
+      Math.cos(angle) * .98,
+      .54,
+      Math.sin(angle) * .98,
+    );
+    segment.rotation.y = -angle;
+    segment.castShadow = true;
+    group.add(segment);
+
+    const bolt = new THREE.Mesh(
+      new THREE.CylinderGeometry(.035, .035, .07, 10),
+      materials.gold,
+    );
+    bolt.rotation.x = Math.PI / 2;
+    bolt.position.set(
+      Math.cos(angle) * 1.08,
+      .57,
+      Math.sin(angle) * 1.08,
+    );
+    group.add(bolt);
+  }
+
+  for (let i = 0; i < 4; i += 1) {
+    const angle = (i / 4) * Math.PI * 2;
+    const brace = new THREE.Mesh(
+      new THREE.BoxGeometry(.22, .34, .13),
+      materials.dark,
+    );
+    brace.position.set(
+      Math.cos(angle) * .72,
+      .82,
+      Math.sin(angle) * .72,
+    );
+    brace.rotation.y = -angle;
+    brace.castShadow = true;
+    group.add(brace);
+  }
+
+  for (let i = 0; i < 3; i += 1) {
+    const angle = -.55 + i * .55;
+    const port = new THREE.Mesh(
+      new THREE.CylinderGeometry(.11, .11, .26, 18),
+      materials.dark,
+    );
+    port.rotation.z = Math.PI / 2;
+    port.rotation.y = -angle;
+    port.position.set(
+      Math.cos(angle) * .95,
+      .38,
+      Math.sin(angle) * .95,
+    );
+    group.add(port);
+  }
+
   group.userData = {
     type: 'generator',
-    base,
+    base: lowerRing,
     body,
-    top,
+    top: topBasin,
     slot,
     halo,
     innerHalo,
     light,
+    energyColumn,
   };
 
   return group;
@@ -186,44 +287,119 @@ export function createGenerator(materials) {
 export function createDoor(materials) {
   const group = new THREE.Group();
 
-  const left = new THREE.Mesh(
-    new THREE.BoxGeometry(.34, 2.8, .52),
+  const accentMaterial = materials.gold.clone();
+  accentMaterial.emissiveIntensity = .28;
+
+  const pillarL = new THREE.Group();
+  const pillarR = new THREE.Group();
+
+  for (let i = 0; i < 5; i += 1) {
+    const blockL = new THREE.Mesh(
+      new THREE.BoxGeometry(.72, .56, .58),
+      materials.stone,
+    );
+    blockL.position.set(-1.25 + (i % 2) * .02, .30 + i * .52, 0);
+    blockL.rotation.z = (i % 2 ? 1 : -1) * .012;
+    blockL.castShadow = true;
+    blockL.receiveShadow = true;
+    pillarL.add(blockL);
+
+    const blockR = new THREE.Mesh(
+      new THREE.BoxGeometry(.72, .56, .58),
+      materials.stone,
+    );
+    blockR.position.set(1.25 - (i % 2) * .02, .30 + i * .52, 0);
+    blockR.rotation.z = (i % 2 ? -1 : 1) * .012;
+    blockR.castShadow = true;
+    blockR.receiveShadow = true;
+    pillarR.add(blockR);
+  }
+
+  const archTop = new THREE.Mesh(
+    new THREE.BoxGeometry(3.15, .44, .62),
     materials.stone,
   );
-  left.position.set(-1.20, 1.26, 0);
-  left.castShadow = true;
+  archTop.position.set(0, 2.92, 0);
+  archTop.castShadow = true;
 
-  const right = left.clone();
-  right.position.x = 1.20;
-
-  const top = new THREE.Mesh(
-    new THREE.BoxGeometry(2.75, .36, .52),
+  const capL = new THREE.Mesh(
+    new THREE.BoxGeometry(.90, .22, .72),
     materials.stone,
   );
-  top.position.set(0, 2.57, 0);
-  top.castShadow = true;
+  capL.position.set(-1.25, 2.78, 0);
 
-  const panel = new THREE.Mesh(
-    new THREE.BoxGeometry(2.02, 2.30, .20),
-    materials.door,
-  );
-  panel.position.set(0, 1.20, .03);
-  panel.castShadow = true;
-
-  const trimMaterial = materials.gold.clone();
-  trimMaterial.emissiveIntensity = .22;
+  const capR = capL.clone();
+  capR.position.x = 1.25;
 
   const trimL = new THREE.Mesh(
-    new THREE.BoxGeometry(.08, 2.08, .05),
-    trimMaterial,
+    new THREE.BoxGeometry(.08, 2.18, .05),
+    accentMaterial,
   );
-  trimL.position.set(-.88, 1.23, .17);
+  trimL.position.set(-.92, 1.22, .18);
 
   const trimR = new THREE.Mesh(
-    new THREE.BoxGeometry(.08, 2.08, .05),
-    trimMaterial.clone(),
+    new THREE.BoxGeometry(.08, 2.18, .05),
+    accentMaterial.clone(),
   );
-  trimR.position.set(.88, 1.23, .17);
+  trimR.position.set(.92, 1.22, .18);
+
+  const trimTop = new THREE.Mesh(
+    new THREE.TorusGeometry(.92, .05, 12, 40, Math.PI),
+    accentMaterial.clone(),
+  );
+  trimTop.position.set(0, 2.28, .18);
+  trimTop.rotation.z = Math.PI;
+
+  const runeBase = new THREE.Mesh(
+    new THREE.CircleGeometry(.38, 28),
+    new THREE.MeshStandardMaterial({
+      color: 0x293540,
+      roughness: .4,
+      metalness: .72,
+    }),
+  );
+  runeBase.position.set(0, 3.30, .19);
+
+  const runeDiamond = new THREE.Mesh(
+    new THREE.OctahedronGeometry(.18, 0),
+    accentMaterial.clone(),
+  );
+  runeDiamond.position.set(0, 3.30, .23);
+  runeDiamond.scale.set(1, 1.45, .25);
+
+  const panel = new THREE.Group();
+  panel.position.set(0, 1.15, .06);
+
+  const leafL = new THREE.Mesh(
+    new THREE.BoxGeometry(.82, 2.06, .18),
+    materials.door,
+  );
+  leafL.position.set(-.42, 0, 0);
+  leafL.castShadow = true;
+
+  const leafR = leafL.clone();
+  leafR.position.x = .42;
+
+  const bandTop = new THREE.Mesh(
+    new THREE.BoxGeometry(1.76, .12, .04),
+    materials.dark,
+  );
+  bandTop.position.set(0, .62, .11);
+
+  const bandMid = bandTop.clone();
+  bandMid.position.y = 0;
+
+  const bandLow = bandTop.clone();
+  bandLow.position.y = -.62;
+
+  const lock = new THREE.Mesh(
+    new THREE.CylinderGeometry(.08, .08, .08, 14),
+    materials.gold,
+  );
+  lock.rotation.z = Math.PI / 2;
+  lock.position.set(0, 0, .14);
+
+  panel.add(leafL, leafR, bandTop, bandMid, bandLow, lock);
 
   const portalMaterial = new THREE.MeshBasicMaterial({
     color: 0x63e7ff,
@@ -231,23 +407,41 @@ export function createDoor(materials) {
     opacity: 0,
     side: THREE.DoubleSide,
     depthWrite: false,
+    blending: THREE.AdditiveBlending,
   });
 
   const portal = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.95, 2.16),
+    new THREE.PlaneGeometry(1.92, 2.18),
     portalMaterial,
   );
-  portal.position.set(0, 1.20, -.16);
+  portal.position.set(0, 1.18, -.18);
 
-  const portalLight = new THREE.PointLight(0x4ee5ff, 0, 5, 2);
-  portalLight.position.set(0, 1.25, -.30);
+  const portalLight = new THREE.PointLight(0x4ee5ff, 0, 6, 2);
+  portalLight.position.set(0, 1.35, -.26);
 
-  group.add(portal, left, right, top, panel, trimL, trimR, portalLight);
+  group.add(
+    portal,
+    pillarL,
+    pillarR,
+    archTop,
+    capL,
+    capR,
+    panel,
+    trimL,
+    trimR,
+    trimTop,
+    runeBase,
+    runeDiamond,
+    portalLight,
+  );
+
   group.userData = {
     type: 'door',
     panel,
     trimL,
     trimR,
+    trimTop,
+    runeDiamond,
     portal,
     portalLight,
   };
