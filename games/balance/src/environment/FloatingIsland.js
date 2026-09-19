@@ -283,6 +283,102 @@ function createHangingCliffs(group, materials, rand) {
 }
 
 
+
+function createIrregularIslandTop(materials) {
+  const shape = new THREE.Shape();
+
+  shape.moveTo(-3.55, -2.05);
+  shape.bezierCurveTo(-3.95, -1.42, -3.95, -.35, -3.78, .58);
+  shape.bezierCurveTo(-3.62, 1.52, -3.18, 2.22, -2.36, 2.44);
+  shape.bezierCurveTo(-1.58, 2.67, -.72, 2.48, .02, 2.55);
+  shape.bezierCurveTo(.92, 2.62, 1.76, 2.48, 2.45, 2.25);
+  shape.bezierCurveTo(3.16, 2.02, 3.62, 1.44, 3.74, .67);
+  shape.bezierCurveTo(3.86, -.05, 3.73, -.88, 3.50, -1.56);
+  shape.bezierCurveTo(3.26, -2.23, 2.58, -2.50, 1.78, -2.47);
+  shape.bezierCurveTo(.96, -2.45, .25, -2.61, -.52, -2.56);
+  shape.bezierCurveTo(-1.38, -2.50, -2.08, -2.54, -2.72, -2.36);
+  shape.bezierCurveTo(-3.12, -2.25, -3.37, -2.16, -3.55, -2.05);
+
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: .24,
+    bevelEnabled: true,
+    bevelSegments: 3,
+    bevelSize: .12,
+    bevelThickness: .08,
+    curveSegments: 8,
+    steps: 1,
+  });
+
+  geometry.rotateX(-Math.PI / 2);
+  geometry.translate(0, -.02, 0);
+
+  const top = new THREE.Mesh(geometry, [
+    materials.grass,
+    materials.earth,
+  ]);
+
+  top.castShadow = true;
+  top.receiveShadow = true;
+  top.name = 'IrregularIslandTop';
+
+  return top;
+}
+
+function createSoftEdgeStones(group, materials, rand) {
+  const positions = [
+    [-3.25, 2.22, .48, .22],
+    [-2.20, 2.43, .44, -.08],
+    [-1.12, 2.45, .42, .15],
+    [.06, 2.50, .46, -.10],
+    [1.18, 2.42, .42, .12],
+    [2.30, 2.20, .48, -.14],
+    [3.20, 1.72, .42, .20],
+    [3.48, .68, .38, -.20],
+    [3.44, -.70, .42, .10],
+    [3.06, -1.86, .46, -.12],
+    [2.00, -2.35, .44, .08],
+    [.82, -2.46, .42, -.10],
+    [-.54, -2.45, .46, .14],
+    [-1.78, -2.42, .42, -.08],
+    [-2.88, -2.20, .46, .12],
+    [-3.46, -1.28, .40, -.15],
+    [-3.55, .02, .38, .12],
+    [-3.46, 1.18, .42, -.12],
+  ];
+
+  const material = materials.rock.clone();
+  material.color.offsetHSL(0, -.03, -.035);
+
+  positions.forEach(([x, z, scale, tilt], index) => {
+    const rock = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(1, 1),
+      material,
+    );
+
+    rock.scale.set(
+      scale * (1.10 + (index % 3) * .08),
+      scale * .42,
+      scale * (.90 + (index % 2) * .12),
+    );
+
+    rock.position.set(
+      x + (rand() - .5) * .08,
+      -.18 + (rand() - .5) * .035,
+      z + (rand() - .5) * .08,
+    );
+
+    rock.rotation.set(
+      (rand() - .5) * .12,
+      rand() * Math.PI,
+      tilt,
+    );
+
+    rock.castShadow = true;
+    rock.receiveShadow = true;
+    group.add(rock);
+  });
+}
+
 function addStoneSurfaceDetails(group, materials, rand) {
   const chipMaterial = materials.rockDark.clone();
   chipMaterial.color.offsetHSL(0, 0, -.08);
@@ -417,61 +513,20 @@ export function createFloatingIsland(baseMaterials) {
   const earthMaterial = materials.earth;
 
   const soil = new THREE.Mesh(
-    new THREE.BoxGeometry(7.70, .46, 5.15),
+    new THREE.BoxGeometry(7.18, .18, 4.66),
     earthMaterial,
   );
 
-  soil.position.y = -.35;
-  soil.castShadow = true;
+  soil.position.y = -.24;
+  soil.castShadow = false;
   soil.receiveShadow = true;
+  soil.visible = false;
   island.add(soil);
 
-  const turf = new THREE.Mesh(
-    new THREE.BoxGeometry(7.58, .18, 5.02),
-    materials.grass,
-  );
+  const irregularTop = createIrregularIslandTop(materials);
+  island.add(irregularTop);
 
-  turf.position.y = -.08;
-  turf.receiveShadow = true;
-  island.add(turf);
-
-  const exitShelfSoil = new THREE.Mesh(
-    new THREE.BoxGeometry(1.55, .54, 1.18),
-    earthMaterial,
-  );
-  exitShelfSoil.position.set(3.88, -.34, -1.86);
-  exitShelfSoil.rotation.y = -.08;
-  exitShelfSoil.castShadow = true;
-  exitShelfSoil.receiveShadow = true;
-  island.add(exitShelfSoil);
-
-  const exitShelf = new THREE.Mesh(
-    new THREE.BoxGeometry(1.47, .17, 1.10),
-    materials.grass,
-  );
-  exitShelf.position.set(3.88, -.04, -1.86);
-  exitShelf.rotation.y = -.08;
-  exitShelf.receiveShadow = true;
-  island.add(exitShelf);
-
-  const leftShoulder = new THREE.Mesh(
-    new THREE.BoxGeometry(1.30, .64, 1.45),
-    earthMaterial,
-  );
-  leftShoulder.position.set(-3.72, -.44, 1.76);
-  leftShoulder.rotation.y = .35;
-  leftShoulder.castShadow = true;
-  island.add(leftShoulder);
-
-  const leftShoulderTurf = new THREE.Mesh(
-    new THREE.BoxGeometry(1.22, .16, 1.36),
-    materials.grass,
-  );
-  leftShoulderTurf.position.set(-3.72, -.08, 1.76);
-  leftShoulderTurf.rotation.y = .35;
-  island.add(leftShoulderTurf);
-
-  createEdgeBlocks(island, materials, rand);
+  createSoftEdgeStones(island, materials, rand);
   addStoneSurfaceDetails(island, materials, rand);
   createStonePath(island, materials.path, rand);
 
