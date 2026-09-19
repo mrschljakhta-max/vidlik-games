@@ -266,6 +266,114 @@ function createSoftEdgeStones(group, materials, rand) {
   });
 }
 
+
+function createLocalCliffMass(group, materials, rand) {
+  const warm = materials.rock.clone();
+  warm.map = null;
+  warm.bumpMap = null;
+  warm.roughnessMap = null;
+  warm.color.setHex(0x8f806e);
+  warm.roughness = .98;
+  warm.metalness = 0;
+
+  const mid = materials.rockDark.clone();
+  mid.map = null;
+  mid.bumpMap = null;
+  mid.roughnessMap = null;
+  mid.color.setHex(0x6f665c);
+  mid.roughness = 1;
+  mid.metalness = 0;
+
+  const dark = mid.clone();
+  dark.color.setHex(0x4f4942);
+
+  const upper = [
+    [-2.95, -.62,  1.20, 1.10, .82, 1.00, .20],
+    [-1.90, -.70,  1.28, 1.22, .92, 1.08, .85],
+    [-.72,  -.72,  1.18, 1.30, .98, 1.12, 1.55],
+    [.55,  -.72,  1.14, 1.34, .98, 1.10, 2.15],
+    [1.78, -.68,  1.00, 1.22, .90, 1.04, 2.78],
+    [2.78, -.60,   .74, 1.02, .76,  .94, 3.38],
+    [-2.88, -.64, -.92, 1.08, .82,  .98, 1.00],
+    [-1.72, -.72, -1.18, 1.26, .94, 1.08, 1.65],
+    [-.42,  -.76, -1.22, 1.34, 1.02, 1.14, 2.30],
+    [.90,  -.74, -1.16, 1.30, .98, 1.10, 2.92],
+    [2.10, -.68, -1.00, 1.18, .88, 1.02, 3.42],
+    [2.94, -.60,  -.56, 1.00, .74,  .92, 4.00],
+  ];
+
+  upper.forEach(([x, y, z, sx, sy, sz, yaw], index) => {
+    const rock = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(1, 1),
+      index % 4 === 0 ? mid : warm,
+    );
+
+    rock.scale.set(sx, sy, sz);
+    rock.position.set(
+      x + (rand() - .5) * .08,
+      y + (rand() - .5) * .06,
+      z + (rand() - .5) * .08,
+    );
+    rock.rotation.set(
+      (rand() - .5) * .14,
+      yaw + (rand() - .5) * .18,
+      (rand() - .5) * .10,
+    );
+    rock.castShadow = true;
+    rock.receiveShadow = true;
+    group.add(rock);
+  });
+
+  const middle = [
+    [-2.25, -1.48,  .62, .92, 1.34, .84, .40],
+    [-1.08, -1.66,  .54, 1.02, 1.54, .92, 1.22],
+    [.20,  -1.76,  .46, 1.08, 1.68, .96, 2.08],
+    [1.46, -1.60,  .36, .98, 1.50, .90, 2.86],
+    [2.38, -1.40,  .22, .84, 1.24, .78, 3.58],
+    [-1.92, -1.54, -.54, .90, 1.40, .84, 1.04],
+    [-.68,  -1.74, -.48, 1.02, 1.62, .92, 1.88],
+    [.68,  -1.72, -.44, 1.04, 1.58, .94, 2.66],
+    [1.88, -1.50, -.36, .90, 1.32, .84, 3.34],
+  ];
+
+  middle.forEach(([x, y, z, sx, sy, sz, yaw], index) => {
+    const rock = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(1, 0),
+      index % 3 === 0 ? warm : mid,
+    );
+    rock.scale.set(sx, sy, sz);
+    rock.position.set(x, y, z);
+    rock.rotation.set(
+      .06 + (rand() - .5) * .12,
+      yaw,
+      (rand() - .5) * .12,
+    );
+    rock.castShadow = true;
+    rock.receiveShadow = true;
+    group.add(rock);
+  });
+
+  const keel = new THREE.Mesh(
+    new THREE.CylinderGeometry(.42, 1.10, 2.65, 7, 1, false),
+    dark,
+  );
+  keel.position.set(-.05, -2.48, 0);
+  keel.rotation.y = .24;
+  keel.castShadow = true;
+  keel.receiveShadow = true;
+  group.add(keel);
+
+  const tip = new THREE.Mesh(
+    new THREE.ConeGeometry(.64, 1.42, 7),
+    dark,
+  );
+  tip.position.set(-.08, -3.88, .02);
+  tip.rotation.y = -.18;
+  tip.castShadow = true;
+  tip.receiveShadow = true;
+  group.add(tip);
+}
+
 function createStonePath(group, material, rand) {
   const pathPoints = [
     [-3.0, .20],
@@ -445,6 +553,8 @@ export function createFloatingIsland(baseMaterials) {
   // Layered island instead of one textured tile slab.
   island.add(createIslandBody(materials));
   island.add(createGrassCap(materials));
+
+  createLocalCliffMass(island, materials, rand);
 
   createSurfaceVariation(island);
   createSoftEdgeStones(island, materials, rand);
