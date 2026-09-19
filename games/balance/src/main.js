@@ -338,6 +338,13 @@ const islandBounds = {
   maxZ: 2.52,
 };
 
+const interactionRadius = {
+  generator: 2.35,
+  generatorExtended: 3.10,
+  core: 1.15,
+  exit: 1.05,
+};
+
 function belongsTo(object, root) {
   let current = object;
 
@@ -351,6 +358,10 @@ function belongsTo(object, root) {
 
 function distanceXZ(a, b) {
   return Math.hypot(a.x - b.x, a.z - b.z);
+}
+
+function isNearGenerator(radius = interactionRadius.generator) {
+  return distanceXZ(robot.position, generator.position) <= radius;
 }
 
 function getLookQuaternion(from, to) {
@@ -736,7 +747,7 @@ function attachCoreToRobot(entry) {
   generatorTag.classList.add('world-tag--active');
 
   title.textContent = `Несемо ядро ${entry.config.label}`;
-  text.innerHTML = `Натисни на генератор, щоб застосувати <b>${entry.config.label}</b>.`;
+  text.innerHTML = `Підійди до генератора й натисни <b>ENTER</b> або клікни по ньому, щоб застосувати <b>${entry.config.label}</b>.`;
 }
 
 function extractInstalledCore(entry) {
@@ -850,7 +861,7 @@ function insertCarriedCore() {
     });
   };
 
-  if (distanceXZ(robot.position, path.generatorApproach) < .95) {
+  if (isNearGenerator(interactionRadius.generator)) {
     install();
     return;
   }
@@ -1010,11 +1021,12 @@ function getCoreEntryFromHit(hit) {
 }
 
 function getContextInteraction() {
-  if (moving || phase === 'done') return null;
+  if (phase === 'done') return null;
 
   if (
     phase === 'exit' &&
-    distanceXZ(robot.position, path.exit) <= 1.05
+    !moving &&
+    distanceXZ(robot.position, path.exit) <= interactionRadius.exit
   ) {
     return {
       label: 'Завершити рівень',
@@ -1025,13 +1037,16 @@ function getContextInteraction() {
   if (
     carryingEntry &&
     !puzzleSolved &&
-    distanceXZ(robot.position, path.generatorApproach) <= 1.15
+    !moving &&
+    isNearGenerator(interactionRadius.generatorExtended)
   ) {
     return {
       label: `Вставити ${carryingEntry.config.label} у генератор`,
       action: insertCarriedCore,
     };
   }
+
+  if (moving) return null;
 
   if (!carryingEntry && !puzzleSolved) {
     const installedEntries = [...coreEntries]
@@ -1040,7 +1055,7 @@ function getContextInteraction() {
 
     if (
       installedEntries.length &&
-      distanceXZ(robot.position, path.generatorApproach) <= 1.20
+      isNearGenerator(interactionRadius.generator)
     ) {
       const entry = installedEntries[0];
 
@@ -1065,7 +1080,7 @@ function getContextInteraction() {
       }
     }
 
-    if (nearest && nearestDistance <= 1.15) {
+    if (nearest && nearestDistance <= interactionRadius.core) {
       return {
         label: `Взяти ядро ${nearest.config.label}`,
         action: () => pickWorldCore(nearest),
