@@ -38,12 +38,17 @@ const coreTagsMarkup = level01.cores.map((core) => {
     : 'Енергетичне ядро · додає енергію';
 
   return `
-    <div id="tag-${core.id}" class="world-tag ${polarityClass} world-tag--active">
+    <div id="tag-${core.id}" class="world-tag world-tag--core ${polarityClass} world-tag--active">
       <strong>${core.label}</strong>
       <span>${description}</span>
     </div>
   `;
 }).join('');
+
+const energySegmentsMarkup = Array.from(
+  { length: level01.generator.targetValue },
+  () => '<i></i>',
+).join('');
 
 app.innerHTML = `
 <main class="game-shell">
@@ -94,14 +99,19 @@ app.innerHTML = `
 
   ${coreTagsMarkup}
 
-  <div id="generator-tag" class="world-tag world-tag--active">
+  <div id="generator-tag" class="world-tag world-tag--generator world-tag--active">
     <strong id="generator-value">${level01.generator.startValue} / ${level01.generator.targetValue}</strong>
+    <div id="generator-segments" class="energy-segments">${energySegmentsMarkup}</div>
     <span id="generator-caption">Недостатньо енергії</span>
   </div>
 
-  <div id="door-tag" class="world-tag">
-    <strong id="door-value">ЗАЧИНЕНО</strong>
-    <span id="door-caption">Потрібен точний баланс ${level01.generator.targetValue}</span>
+  <div id="door-tag" class="world-tag world-tag--door">
+    <div class="door-indicator">
+      <b class="door-lock" aria-hidden="true"></b>
+      <strong id="door-value">${level01.generator.targetValue}</strong>
+    </div>
+    <div id="door-segments" class="energy-segments energy-segments--door">${energySegmentsMarkup}</div>
+    <span id="door-caption">Потрібен точний баланс</span>
   </div>
 
   <div id="orientation-lock" class="orientation-lock" aria-live="polite">
@@ -128,9 +138,11 @@ const interactionLabel = document.querySelector('#interaction-label');
 const generatorTag = document.querySelector('#generator-tag');
 const generatorValue = document.querySelector('#generator-value');
 const generatorCaption = document.querySelector('#generator-caption');
+const generatorSegments = [...document.querySelectorAll('#generator-segments i')];
 const doorTag = document.querySelector('#door-tag');
 const doorValue = document.querySelector('#door-value');
 const doorCaption = document.querySelector('#door-caption');
+const doorSegments = [...document.querySelectorAll('#door-segments i')];
 const orientationLock = document.querySelector('#orientation-lock');
 
 let orientationBlocked = false;
@@ -776,8 +788,26 @@ function updateCoreTags() {
   }
 }
 
+function paintEnergySegments(segments, value, target) {
+  const safeValue = Math.max(0, Math.min(target, value));
+
+  segments.forEach((segment, index) => {
+    segment.classList.toggle('is-filled', index < safeValue);
+  });
+}
+
 function updateGeneratorState({ allowSolve = true } = {}) {
   generatorValue.textContent = `${currentValue} / ${level01.generator.targetValue}`;
+  paintEnergySegments(
+    generatorSegments,
+    currentValue,
+    level01.generator.targetValue,
+  );
+  paintEnergySegments(
+    doorSegments,
+    currentValue,
+    level01.generator.targetValue,
+  );
   updateEquationTrail();
 
   generatorTag.classList.remove(
@@ -1019,9 +1049,9 @@ function openDoor() {
   const startY = panel.position.y;
   const startedAt = performance.now();
 
-  doorValue.textContent = 'АКТИВАЦІЯ';
+  doorValue.textContent = '5 / 5';
   doorCaption.textContent = 'Баланс підтверджено';
-  doorTag.classList.add('world-tag--cyan');
+  doorTag.classList.add('world-tag--cyan', 'world-tag--balanced');
 
   const tick = (now) => {
     const u = Math.min(1, (now - startedAt) / 1050);
@@ -1042,8 +1072,9 @@ function openDoor() {
     phase = 'exit';
     exit.visible = true;
 
-    doorValue.textContent = 'ВІДКРИТО';
+    doorValue.textContent = 'ГОТОВО';
     doorCaption.textContent = 'Прохід активний';
+    doorTag.classList.add('world-tag--door-open');
     title.textContent = 'Пройди через двері';
     text.textContent = 'Проведи робота вручну або натисни на світне кільце.';
   };
@@ -1452,6 +1483,15 @@ function render() {
   }
 
   for (const entry of coreEntries) {
+    const tagAnchor = entry.state === 'installed'
+      ? generator.position
+      : new THREE.Vector3(...entry.config.approach);
+
+    entry.tag.classList.toggle(
+      'world-tag--near',
+      distanceXZ(robot.position, tagAnchor) <= 1.45,
+    );
+
     worldToScreen(
       entry.object,
       entry.tag,
