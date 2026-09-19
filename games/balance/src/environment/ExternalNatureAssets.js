@@ -125,7 +125,7 @@ function recolorFoliage(root, mode = 'green') {
     if (material.color) {
       if (mode === 'green') {
         // Force all foliage into one coherent sage/olive palette.
-        material.color.setHex(0x6f8f55);
+        material.color.setHex(0x6f9f4f);
       } else if (mode === 'light') {
         // Replaces the loud red flower accents with muted warm cream.
         material.color.setHex(0xd8d0a8);
@@ -260,11 +260,16 @@ function addSurfaceRocks(target, rocks, materials) {
 
 function addBushes(target, common, flowers) {
   const greenPlacements = [
-    [-3.02, .10, 1.18, .46, .4],
-    [-2.28, .10, 1.88, .42, 1.3],
-    [-1.22, .10, -1.86, .42, 2.1],
-    [1.92, .10, 1.76, .46, 2.8],
-    [2.48, .10, -1.64, .44, .2],
+    [-3.08, .10, 1.28, .54, .4],
+    [-2.60, .10, 1.84, .48, 1.3],
+    [-2.02, .10, 2.02, .46, 2.1],
+    [-1.58, .10, -1.92, .48, 2.5],
+    [-.52, .10, 2.02, .46, 1.1],
+    [.72, .10, 1.98, .46, 2.0],
+    [1.88, .10, 1.78, .52, 2.8],
+    [2.48, .10, -1.68, .50, .2],
+    [2.96, .10, .74, .44, 1.7],
+    [-3.14, .10, -.72, .44, .8],
   ];
 
   greenPlacements.forEach(([x, y, z, size, yaw]) => {
@@ -279,7 +284,7 @@ function addBushes(target, common, flowers) {
   // One restrained warm accent instead of several loud red bushes.
   place(target, flowers, {
     position: [.82, .10, -1.84],
-    size: .28,
+    size: .34,
     rotation: [0, .8, 0],
     transform: (object) => recolorFoliage(object, 'light'),
   });
@@ -287,13 +292,18 @@ function addBushes(target, common, flowers) {
 
 function addGrass(target, tall, wispy) {
   const placements = [
-    [-3.10, .10, 1.84, .18, .2, 0],
-    [-2.28, .10, -1.88, .16, 1.8, 1],
-    [-.42, .10, 1.96, .17, 1.4, 0],
-    [1.18, .10, 1.90, .16, .9, 1],
-    [2.26, .10, -1.78, .17, 2.1, 0],
-    [2.98, .10, .58, .14, 1.6, 1],
-    [-3.06, .10, -.54, .14, .8, 0],
+    [-3.10, .10, 1.84, .22, .2, 0],
+    [-2.76, .10, 1.32, .18, 1.0, 1],
+    [-2.28, .10, -1.88, .20, 1.8, 1],
+    [-1.82, .10, 1.76, .18, 2.4, 0],
+    [-1.18, .10, -1.72, .18, .3, 1],
+    [-.42, .10, 1.96, .20, 1.4, 0],
+    [.36, .10, -1.84, .18, 2.0, 1],
+    [1.18, .10, 1.90, .20, .9, 1],
+    [1.86, .10, 1.52, .18, 1.7, 0],
+    [2.26, .10, -1.78, .20, 2.1, 0],
+    [2.98, .10, .58, .18, 1.6, 1],
+    [-3.06, .10, -.54, .18, .8, 0],
   ];
 
   placements.forEach(([x, y, z, size, yaw, variant]) => {
@@ -309,9 +319,12 @@ function addGrass(target, tall, wispy) {
 
 function addAccentPlants(target, plant) {
   const placements = [
-    [-2.70, .10, 1.76, .26, .5],
-    [.10, .10, 1.82, .28, 1.2],
-    [2.16, .10, 1.34, .25, 2.5],
+    [-2.92, .10, 1.62, .30, .5],
+    [-2.10, .10, -1.62, .26, 1.8],
+    [.10, .10, 1.82, .32, 1.2],
+    [1.42, .10, -1.72, .28, 2.1],
+    [2.16, .10, 1.34, .30, 2.5],
+    [2.78, .10, -.42, .26, .6],
   ];
 
   placements.forEach(([x, y, z, size, yaw]) => {
