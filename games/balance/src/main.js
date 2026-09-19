@@ -18,6 +18,9 @@ import {
   addExternalEnvironmentAssets,
 } from './environment/ExternalAssets.js';
 import {
+  addExternalNatureAssets,
+} from './environment/ExternalNatureAssets.js';
+import {
   createEnergyCore,
   createCorePedestal,
   createGenerator,
@@ -287,6 +290,10 @@ addExternalEnvironmentAssets(scene, materials, {
   doorPosition: door.position.clone(),
 }).catch((error) => {
   console.warn('VIDLIK: external environment pass failed', error);
+});
+
+addExternalNatureAssets(scene).catch((error) => {
+  console.warn('VIDLIK: external nature pass failed', error);
 });
 
 const cable = createEnergyCable(materials);
