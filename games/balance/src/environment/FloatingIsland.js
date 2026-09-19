@@ -41,7 +41,7 @@ function createLantern(materials, scale = 1) {
   cap.position.y = .65 * scale;
   cap.rotation.y = Math.PI / 4;
 
-  const light = new THREE.PointLight(0xffb84d, 3.0 * scale, 2.6 * scale, 2);
+  const light = new THREE.PointLight(0xffb84d, 3.2 * scale, 2.8 * scale, 2);
   light.position.y = .50 * scale;
 
   group.add(post, frame, glass, cap, light);
@@ -69,10 +69,12 @@ function createIslandShape() {
 function createSmoothGrassMaterial(materials) {
   const grass = materials.grass.clone();
 
+  // Critical change: remove the repeating procedural map that caused
+  // the visible "checkerboard / Minecraft" pattern.
   grass.map = null;
   grass.bumpMap = null;
   grass.roughnessMap = null;
-  grass.color.setHex(0x83b85f);
+  grass.color.setHex(0x789f5f);
   grass.roughness = .94;
   grass.metalness = 0;
   grass.needsUpdate = true;
@@ -84,25 +86,21 @@ function createIslandBody(materials) {
   const shape = createIslandShape();
 
   const geometry = new THREE.ExtrudeGeometry(shape, {
-    depth: .30,
+    depth: .34,
     bevelEnabled: true,
     bevelSegments: 4,
-    bevelSize: .10,
-    bevelThickness: .08,
+    bevelSize: .13,
+    bevelThickness: .10,
     curveSegments: 12,
     steps: 1,
   });
 
   geometry.rotateX(-Math.PI / 2);
-  geometry.translate(0, -.26, 0);
+  geometry.translate(0, -.29, 0);
 
   const bodyMaterial = materials.earth.clone();
-  bodyMaterial.map = null;
-  bodyMaterial.bumpMap = null;
-  bodyMaterial.roughnessMap = null;
-  bodyMaterial.color.setHex(0x6d5b47);
-  bodyMaterial.roughness = .98;
-  bodyMaterial.needsUpdate = true;
+  bodyMaterial.color.setHex(0x5a4d3d);
+  bodyMaterial.roughness = 1;
 
   const body = new THREE.Mesh(geometry, bodyMaterial);
   body.name = 'IslandEarthBody';
@@ -113,31 +111,43 @@ function createIslandBody(materials) {
 }
 
 function createGrassCap(materials) {
-  const geometry = new THREE.ShapeGeometry(createIslandShape(), 16);
+  const shape = createIslandShape();
+
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: .055,
+    bevelEnabled: true,
+    bevelSegments: 3,
+    bevelSize: .07,
+    bevelThickness: .035,
+    curveSegments: 12,
+    steps: 1,
+  });
+
   geometry.rotateX(-Math.PI / 2);
+  geometry.translate(0, .015, 0);
 
   const cap = new THREE.Mesh(
     geometry,
     createSmoothGrassMaterial(materials),
   );
 
-  cap.position.y = .045;
   cap.name = 'IslandGrassCap';
+  cap.castShadow = true;
   cap.receiveShadow = true;
 
   return cap;
 }
 
-function makeSoftPatchTexture(inner, middle, alpha = .12) {
+function makeSoftPatchTexture(inner, middle, alpha = .42) {
   const canvas = document.createElement('canvas');
   canvas.width = 256;
   canvas.height = 256;
 
   const ctx = canvas.getContext('2d');
-  const gradient = ctx.createRadialGradient(128, 128, 10, 128, 128, 124);
+  const gradient = ctx.createRadialGradient(128, 128, 8, 128, 128, 124);
 
   gradient.addColorStop(0, inner);
-  gradient.addColorStop(.54, middle);
+  gradient.addColorStop(.50, middle);
   gradient.addColorStop(1, 'rgba(0,0,0,0)');
 
   ctx.fillStyle = gradient;
@@ -153,34 +163,36 @@ function makeSoftPatchTexture(inner, middle, alpha = .12) {
 }
 
 function createSurfaceVariation(group) {
-  // Small transparent tint patches only — no large pale polygons.
   const patches = [
-    [-2.55, 1.28, 1.05, .65, .10, 'moss'],
-    [-1.02, -1.42, .92, .58, -.20, 'earth'],
-    [2.18, 1.26, .82, .52, .18, 'moss'],
+    [-2.50, -.03, 1.38, 1.80, 1.10, .20, 'moss'],
+    [-1.20, -.03, -1.58, 1.55, 1.00, -.35, 'earth'],
+    [.15, -.03, 1.76, 1.35, .88, .15, 'moss'],
+    [1.64, -.03, -1.55, 1.45, .92, -.18, 'earth'],
+    [2.64, -.03, .92, 1.30, .82, .38, 'moss'],
+    [2.38, -.03, -1.82, 1.05, .70, -.40, 'earth'],
   ];
 
   const textures = {
     moss: makeSoftPatchTexture(
-      'rgba(103,145,70,1)',
-      'rgba(128,163,86,.48)',
-      .11,
+      'rgba(68,100,43,1)',
+      'rgba(96,125,58,.68)',
+      .30,
     ),
     earth: makeSoftPatchTexture(
-      'rgba(120,93,60,1)',
-      'rgba(139,110,72,.42)',
-      .10,
+      'rgba(104,84,58,1)',
+      'rgba(124,102,69,.62)',
+      .26,
     ),
   };
 
-  patches.forEach(([x, z, sx, sz, rotation, type]) => {
+  patches.forEach(([x, y, z, sx, sz, rotation, type]) => {
     const material = new THREE.MeshBasicMaterial({
       map: textures[type],
       transparent: true,
       opacity: 1,
       depthWrite: false,
       polygonOffset: true,
-      polygonOffsetFactor: -2,
+      polygonOffsetFactor: -1,
       side: THREE.DoubleSide,
     });
 
@@ -191,153 +203,38 @@ function createSurfaceVariation(group) {
 
     patch.rotation.x = -Math.PI / 2;
     patch.rotation.z = rotation;
-    patch.position.set(x, .058, z);
-    patch.renderOrder = 3;
+    patch.position.set(x, .082 + y, z);
+    patch.renderOrder = 2;
 
     group.add(patch);
   });
 }
 
-function createNativeCliffMass(group, materials, rand) {
-  const upperRock = materials.rock.clone();
-  upperRock.map = null;
-  upperRock.bumpMap = null;
-  upperRock.roughnessMap = null;
-  upperRock.color.setHex(0x968774);
-  upperRock.roughness = .98;
-  upperRock.metalness = 0;
-
-  const middleRock = materials.rockDark.clone();
-  middleRock.map = null;
-  middleRock.bumpMap = null;
-  middleRock.roughnessMap = null;
-  middleRock.color.setHex(0x6f665c);
-  middleRock.roughness = 1;
-  middleRock.metalness = 0;
-
-  const lowerRock = middleRock.clone();
-  lowerRock.color.setHex(0x4f4942);
-
-  const upper = [
-    [-2.90, -.58, 1.18, 1.10, .76, .96, .20],
-    [-1.78, -.64, 1.28, 1.22, .88, 1.02, .90],
-    [-.55, -.67, 1.18, 1.30, .96, 1.08, 1.55],
-    [.74, -.67, 1.10, 1.30, .94, 1.06, 2.18],
-    [1.92, -.63, .95, 1.18, .84, .98, 2.82],
-    [2.84, -.57, .68, 1.00, .72, .90, 3.42],
-    [-2.84, -.60, -.88, 1.04, .76, .94, 1.02],
-    [-1.64, -.66, -1.12, 1.22, .88, 1.02, 1.66],
-    [-.34, -.70, -1.16, 1.30, .98, 1.08, 2.34],
-    [.98, -.68, -1.10, 1.28, .94, 1.06, 2.94],
-    [2.16, -.63, -.90, 1.14, .82, .98, 3.48],
-    [2.96, -.56, -.48, .96, .70, .88, 4.06],
-  ];
-
-  upper.forEach(([x, y, z, sx, sy, sz, yaw], index) => {
-    const rock = new THREE.Mesh(
-      new THREE.DodecahedronGeometry(1, 1),
-      index % 4 === 0 ? middleRock : upperRock,
-    );
-
-    rock.scale.set(sx, sy, sz);
-    rock.position.set(
-      x + (rand() - .5) * .08,
-      y + (rand() - .5) * .06,
-      z + (rand() - .5) * .08,
-    );
-    rock.rotation.set(
-      (rand() - .5) * .14,
-      yaw + (rand() - .5) * .18,
-      (rand() - .5) * .10,
-    );
-    rock.castShadow = true;
-    rock.receiveShadow = true;
-    group.add(rock);
-  });
-
-  const middle = [
-    [-2.30, -1.45, .62, .90, 1.28, .82, .38],
-    [-1.10, -1.62, .55, 1.00, 1.48, .90, 1.22],
-    [.18, -1.72, .46, 1.08, 1.62, .96, 2.08],
-    [1.48, -1.56, .36, .96, 1.45, .88, 2.86],
-    [2.42, -1.36, .22, .82, 1.20, .76, 3.58],
-    [-1.98, -1.52, -.52, .88, 1.34, .82, 1.04],
-    [-.72, -1.70, -.48, 1.00, 1.56, .90, 1.88],
-    [.66, -1.68, -.44, 1.02, 1.52, .92, 2.66],
-    [1.90, -1.46, -.36, .88, 1.28, .82, 3.34],
-  ];
-
-  middle.forEach(([x, y, z, sx, sy, sz, yaw], index) => {
-    const rock = new THREE.Mesh(
-      new THREE.DodecahedronGeometry(1, 0),
-      index % 3 === 0 ? upperRock : middleRock,
-    );
-
-    rock.scale.set(sx, sy, sz);
-    rock.position.set(x, y, z);
-    rock.rotation.set(
-      .06 + (rand() - .5) * .12,
-      yaw,
-      (rand() - .5) * .12,
-    );
-    rock.castShadow = true;
-    rock.receiveShadow = true;
-    group.add(rock);
-  });
-
-  // Longer tapered lower section to restore a proper floating-island silhouette.
-  const keel = new THREE.Mesh(
-    new THREE.CylinderGeometry(.42, 1.12, 2.90, 7, 1, false),
-    lowerRock,
-  );
-  keel.position.set(-.04, -2.56, .00);
-  keel.rotation.y = .24;
-  keel.castShadow = true;
-  keel.receiveShadow = true;
-  group.add(keel);
-
-  const lowerShardA = new THREE.Mesh(
-    new THREE.ConeGeometry(.74, 1.52, 7),
-    lowerRock,
-  );
-  lowerShardA.position.set(-.30, -4.02, .10);
-  lowerShardA.rotation.set(.10, -.22, -.08);
-  lowerShardA.castShadow = true;
-  lowerShardA.receiveShadow = true;
-  group.add(lowerShardA);
-
-  const lowerShardB = new THREE.Mesh(
-    new THREE.ConeGeometry(.46, 1.12, 6),
-    middleRock,
-  );
-  lowerShardB.position.set(.58, -3.56, -.18);
-  lowerShardB.rotation.set(-.08, .42, .16);
-  lowerShardB.castShadow = true;
-  lowerShardB.receiveShadow = true;
-  group.add(lowerShardB);
-}
-
-function createEdgeStoneAccents(group, materials, rand) {
-  // Fewer accents than before: they break the edge without making a stone necklace.
+function createSoftEdgeStones(group, materials, rand) {
   const positions = [
-    [-3.25, 1.72, .40, .10],
-    [-2.10, 2.28, .34, -.06],
-    [.12, 2.42, .34, .08],
-    [2.38, 2.02, .38, -.10],
-    [3.34, .72, .34, .08],
-    [3.06, -1.72, .38, -.08],
-    [.76, -2.36, .34, .08],
-    [-1.74, -2.30, .36, -.08],
-    [-3.34, -1.10, .34, .08],
+    [-3.25, 2.22, .48, .22],
+    [-2.20, 2.43, .44, -.08],
+    [-1.12, 2.45, .42, .15],
+    [.06, 2.50, .46, -.10],
+    [1.18, 2.42, .42, .12],
+    [2.30, 2.20, .48, -.14],
+    [3.20, 1.72, .42, .20],
+    [3.48, .68, .38, -.20],
+    [3.44, -.70, .42, .10],
+    [3.06, -1.86, .46, -.12],
+    [2.00, -2.35, .44, .08],
+    [.82, -2.46, .42, -.10],
+    [-.54, -2.45, .46, .14],
+    [-1.78, -2.42, .42, -.08],
+    [-2.88, -2.20, .46, .12],
+    [-3.46, -1.28, .40, -.15],
+    [-3.55, .02, .38, .12],
+    [-3.46, 1.18, .42, -.12],
   ];
 
   const material = materials.rock.clone();
-  material.map = null;
-  material.bumpMap = null;
-  material.roughnessMap = null;
-  material.color.setHex(0xa08f79);
-  material.roughness = .97;
-  material.needsUpdate = true;
+  material.color.setHex(0x9a8f7e);
+  material.roughness = .96;
 
   positions.forEach(([x, z, scale, tilt], index) => {
     const rock = new THREE.Mesh(
@@ -346,15 +243,15 @@ function createEdgeStoneAccents(group, materials, rand) {
     );
 
     rock.scale.set(
-      scale * (1.05 + (index % 3) * .06),
-      scale * .32,
-      scale * (.86 + (index % 2) * .10),
+      scale * (1.08 + (index % 3) * .07),
+      scale * .38,
+      scale * (.88 + (index % 2) * .10),
     );
 
     rock.position.set(
-      x + (rand() - .5) * .05,
-      -.13,
-      z + (rand() - .5) * .05,
+      x + (rand() - .5) * .06,
+      -.18 + (rand() - .5) * .025,
+      z + (rand() - .5) * .06,
     );
 
     rock.rotation.set(
@@ -415,23 +312,23 @@ function createStonePath(group, material, rand) {
 
 function createDoorFoundation(group, materials) {
   const baseMaterial = materials.stone.clone();
-  baseMaterial.color.setHex(0xada08b);
+  baseMaterial.color.setHex(0xa69a87);
   baseMaterial.roughness = .94;
 
   const base = new THREE.Mesh(
-    new THREE.BoxGeometry(2.52, .10, .74),
+    new THREE.BoxGeometry(2.55, .16, .76),
     baseMaterial,
   );
-  base.position.set(3.45, .045, -1.18);
+  base.position.set(3.45, .07, -1.18);
   base.castShadow = true;
   base.receiveShadow = true;
   group.add(base);
 
   const sideStoneData = [
-    [2.44, .14, -1.18, .30, .20, .30, .08],
-    [4.46, .14, -1.18, .32, .22, .32, -.06],
-    [2.76, .10, -.84, .26, .16, .22, .18],
-    [4.14, .10, -.84, .26, .16, .22, -.15],
+    [2.42, .18, -1.18, .34, .24, .34, .08],
+    [4.48, .18, -1.18, .38, .28, .36, -.06],
+    [2.72, .14, -.80, .32, .20, .26, .18],
+    [4.18, .14, -.82, .30, .19, .24, -.15],
   ];
 
   sideStoneData.forEach(([x, y, z, sx, sy, sz, rz]) => {
@@ -440,7 +337,7 @@ function createDoorFoundation(group, materials) {
       materials.rock.clone(),
     );
 
-    stone.material.color.setHex(0x988b78);
+    stone.material.color.setHex(0x958a79);
     stone.material.roughness = .97;
     stone.scale.set(sx, sy, sz);
     stone.position.set(x, y, z);
@@ -453,17 +350,47 @@ function createDoorFoundation(group, materials) {
 
 function createGeneratorFoundation(group, materials) {
   const foundationMaterial = materials.path.clone();
-  foundationMaterial.color.setHex(0xb0a28d);
+  foundationMaterial.color.setHex(0xa99e8c);
   foundationMaterial.roughness = .92;
 
   const ring = new THREE.Mesh(
-    new THREE.RingGeometry(1.26, 1.56, 48),
+    new THREE.RingGeometry(1.26, 1.58, 48),
     foundationMaterial,
   );
   ring.rotation.x = -Math.PI / 2;
-  ring.position.set(1.30, .092, .50);
+  ring.position.set(1.30, .095, .50);
   ring.receiveShadow = true;
   group.add(ring);
+
+  const plateMaterial = materials.stone.clone();
+  plateMaterial.color.setHex(0xb1a592);
+  plateMaterial.roughness = .94;
+
+  const plateData = [
+    [.00, 1.54, .42, .20],
+    [.68, 1.36, .34, -.18],
+    [-.68, 1.34, .36, .14],
+    [1.08, .78, .30, .28],
+    [-1.06, .80, .32, -.22],
+  ];
+
+  plateData.forEach(([dx, dz, scale, rotation]) => {
+    const plate = new THREE.Mesh(
+      new THREE.BoxGeometry(.56 * scale * 2, .065, .42 * scale * 2),
+      plateMaterial,
+    );
+
+    plate.position.set(
+      1.30 + dx,
+      .105,
+      .50 + dz,
+    );
+
+    plate.rotation.y = rotation;
+    plate.castShadow = true;
+    plate.receiveShadow = true;
+    group.add(plate);
+  });
 }
 
 function createFlowerPatch(rand, scale = 1) {
@@ -475,32 +402,32 @@ function createFlowerPatch(rand, scale = 1) {
   });
 
   const flowerMaterials = [
-    new THREE.MeshStandardMaterial({ color: 0xf0ead8, roughness: .95 }),
-    new THREE.MeshStandardMaterial({ color: 0xe1d6a8, roughness: .95 }),
-    new THREE.MeshStandardMaterial({ color: 0xe1ead9, roughness: .95 }),
+    new THREE.MeshStandardMaterial({ color: 0xf3ecd7, roughness: .95 }),
+    new THREE.MeshStandardMaterial({ color: 0xe3d5a7, roughness: .95 }),
+    new THREE.MeshStandardMaterial({ color: 0xdde7d5, roughness: .95 }),
   ];
 
-  for (let i = 0; i < 4; i += 1) {
+  for (let i = 0; i < 5; i += 1) {
     const stem = new THREE.Mesh(
-      new THREE.CylinderGeometry(.009 * scale, .011 * scale, .14 * scale, 6),
+      new THREE.CylinderGeometry(.010 * scale, .012 * scale, .16 * scale, 6),
       stemMaterial,
     );
 
     stem.position.set(
-      (rand() - .5) * .26 * scale,
-      .07 * scale,
-      (rand() - .5) * .26 * scale,
+      (rand() - .5) * .30 * scale,
+      .08 * scale,
+      (rand() - .5) * .30 * scale,
     );
 
     const flower = new THREE.Mesh(
-      new THREE.SphereGeometry(.032 * scale, 8, 6),
+      new THREE.SphereGeometry(.035 * scale, 8, 6),
       flowerMaterials[i % flowerMaterials.length],
     );
 
     flower.scale.y = .50;
     flower.position.set(
       stem.position.x,
-      .15 * scale,
+      .17 * scale,
       stem.position.z,
     );
 
@@ -515,35 +442,36 @@ export function createFloatingIsland(baseMaterials) {
   const island = new THREE.Group();
   const rand = seededRandom(29);
 
+  // Layered island instead of one textured tile slab.
   island.add(createIslandBody(materials));
   island.add(createGrassCap(materials));
 
-  createNativeCliffMass(island, materials, rand);
   createSurfaceVariation(island);
-  createEdgeStoneAccents(island, materials, rand);
+  createSoftEdgeStones(island, materials, rand);
   createStonePath(island, materials.path, rand);
   createDoorFoundation(island, materials);
   createGeneratorFoundation(island, materials);
 
   const flowerPositions = [
-    [-2.48, -1.78, .50],
-    [2.54, 1.16, .46],
+    [-2.30, -1.88, .66],
+    [.38, -1.96, .60],
+    [2.62, 1.20, .56],
   ];
 
   flowerPositions.forEach(([x, z, scale]) => {
     const patch = createFlowerPatch(rand, scale);
-    patch.position.set(x, .095, z);
+    patch.position.set(x, .105, z);
     island.add(patch);
   });
 
   [
-    [-3.12, -2.08, .76],
-    [-3.20, 1.98, .76],
-    [2.76, 1.94, .74],
-    [3.05, -.20, .72],
+    [-3.12, -2.08, .78],
+    [-3.20, 1.98, .78],
+    [2.76, 1.94, .76],
+    [3.05, -.20, .74],
   ].forEach(([x, z, scale]) => {
     const lantern = createLantern(baseMaterials, scale);
-    lantern.position.set(x, .08, z);
+    lantern.position.set(x, .09, z);
     island.add(lantern);
   });
 
@@ -557,26 +485,28 @@ export function addCloudscape(scene, baseMaterials) {
   const cloudMaterial = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     transparent: true,
-    opacity: .28,
+    opacity: .32,
     roughness: 1,
     depthWrite: false,
   });
 
-  for (let i = 0; i < 18; i += 1) {
+  // Softer background: fewer, smaller clouds so they do not compete
+  // with the island silhouette.
+  for (let i = 0; i < 22; i += 1) {
     const cloud = new THREE.Mesh(
-      new THREE.SphereGeometry(.50 + rand() * .48, 18, 12),
+      new THREE.SphereGeometry(.52 + rand() * .54, 18, 12),
       cloudMaterial,
     );
 
     cloud.scale.set(
-      1.45 + rand() * 1.20,
-      .38 + rand() * .28,
-      .86 + rand() * .68,
+      1.55 + rand() * 1.35,
+      .40 + rand() * .30,
+      .90 + rand() * .75,
     );
 
     cloud.position.set(
       (rand() - .5) * 25,
-      -4.2 - rand() * 3.3,
+      -4.1 - rand() * 3.2,
       (rand() - .5) * 20,
     );
 
@@ -586,17 +516,18 @@ export function addCloudscape(scene, baseMaterials) {
   const waterfallMaterial = new THREE.MeshBasicMaterial({
     color: 0x83e5ff,
     transparent: true,
-    opacity: .24,
+    opacity: .28,
     side: THREE.DoubleSide,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
   });
 
+  // Smaller, more distant background islands.
   const distantData = [
-    [-8.6, 1.2, -10.8, .70],
-    [8.4, 2.0, -12.4, .76],
-    [-11.6, 3.8, -17.4, .58],
-    [10.8, 4.2, -18.4, .62],
+    [-8.6, 1.2, -10.5, .76],
+    [8.2, 2.0, -12.0, .82],
+    [-11.5, 3.8, -17.0, .62],
+    [10.8, 4.2, -18.0, .68],
   ];
 
   distantData.forEach(([x, y, z, scale], index) => {
@@ -608,41 +539,41 @@ export function addCloudscape(scene, baseMaterials) {
     );
 
     mainRock.scale.set(
-      1.00 * scale,
-      1.58 * scale,
-      .88 * scale,
+      1.05 * scale,
+      1.65 * scale,
+      .92 * scale,
     );
 
     mainRock.position.y = -1.05 * scale;
     mainRock.rotation.set(.08, index * .52, -.04);
 
     const cap = new THREE.Mesh(
-      new THREE.CircleGeometry(1, 24),
+      new THREE.SphereGeometry(1, 14, 9),
       createSmoothGrassMaterial(materials),
     );
-    cap.rotation.x = -Math.PI / 2;
+
     cap.scale.set(
-      1.04 * scale,
-      .88 * scale,
-      1,
+      1.08 * scale,
+      .14 * scale,
+      .92 * scale,
     );
-    cap.position.y = .10 * scale;
+    cap.position.y = .16 * scale;
 
     group.add(mainRock, cap);
 
     if (index < 2) {
       const waterfall = new THREE.Mesh(
         new THREE.PlaneGeometry(
-          .13 * scale,
-          2.00 * scale,
+          .14 * scale,
+          2.20 * scale,
         ),
         waterfallMaterial,
       );
 
       waterfall.position.set(
-        .28 * scale,
-        -.92 * scale,
-        .72 * scale,
+        .30 * scale,
+        -.95 * scale,
+        .76 * scale,
       );
 
       group.add(waterfall);
