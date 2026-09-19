@@ -119,86 +119,141 @@ export function createCorePedestal(materials, value = 2) {
 
 export function createGenerator(materials) {
   const group = new THREE.Group();
+  group.name = 'BalanceGenerator';
+
+  const stone = materials.stone.clone();
+  stone.color.setHex(0xa99d87);
+  stone.roughness = .94;
+
+  const stoneDark = materials.rockDark.clone();
+  stoneDark.color.setHex(0x635f58);
+  stoneDark.roughness = .96;
+
+  const metal = materials.dark.clone();
+  metal.color.setHex(0x1b242b);
+  metal.roughness = .34;
+  metal.metalness = .72;
+
+  const brass = materials.gold.clone();
+  brass.color.setHex(0xc98b37);
+  brass.emissive.setHex(0x6b3a06);
+  brass.emissiveIntensity = .18;
+  brass.metalness = .64;
+  brass.roughness = .32;
 
   const basePlate = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.28, 1.42, .22, 48),
-    materials.stone,
+    new THREE.CylinderGeometry(1.26, 1.38, .18, 12),
+    stone,
   );
-  basePlate.position.y = .10;
+  basePlate.position.y = .09;
   basePlate.castShadow = true;
   basePlate.receiveShadow = true;
 
   const lowerRing = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.02, 1.12, .30, 48),
-    materials.dark,
+    new THREE.CylinderGeometry(1.08, 1.18, .22, 16),
+    metal,
   );
-  lowerRing.position.y = .28;
+  lowerRing.position.y = .24;
   lowerRing.castShadow = true;
+  lowerRing.receiveShadow = true;
+
+  const lowerStoneRing = new THREE.Mesh(
+    new THREE.CylinderGeometry(.95, 1.06, .24, 14),
+    stoneDark,
+  );
+  lowerStoneRing.position.y = .38;
+  lowerStoneRing.castShadow = true;
+  lowerStoneRing.receiveShadow = true;
 
   const body = new THREE.Mesh(
-    new THREE.CylinderGeometry(.82, .90, .70, 40),
-    materials.stone,
+    new THREE.CylinderGeometry(.80, .88, .58, 14),
+    stone,
   );
-  body.position.y = .68;
+  body.position.y = .66;
   body.castShadow = true;
+  body.receiveShadow = true;
+
+  const metalBand = new THREE.Mesh(
+    new THREE.CylinderGeometry(.84, .90, .13, 16),
+    metal,
+  );
+  metalBand.position.y = .64;
+  metalBand.castShadow = true;
+
+  const upperStone = new THREE.Mesh(
+    new THREE.CylinderGeometry(.74, .81, .20, 14),
+    stoneDark,
+  );
+  upperStone.position.y = .91;
+  upperStone.castShadow = true;
 
   const topBasin = new THREE.Mesh(
-    new THREE.CylinderGeometry(.72, .82, .18, 40),
-    materials.dark,
+    new THREE.CylinderGeometry(.70, .78, .16, 18),
+    metal,
   );
-  topBasin.position.y = 1.05;
+  topBasin.position.y = 1.04;
   topBasin.castShadow = true;
 
   const basinInner = new THREE.Mesh(
-    new THREE.CylinderGeometry(.49, .53, .08, 36),
-    materials.white,
+    new THREE.CylinderGeometry(.53, .58, .07, 32),
+    new THREE.MeshPhysicalMaterial({
+      color: 0x102d35,
+      metalness: .34,
+      roughness: .24,
+      clearcoat: .8,
+    }),
   );
   basinInner.position.y = 1.10;
 
   const slotMaterial = materials.cyan.clone();
-  slotMaterial.emissiveIntensity = 2.8;
+  slotMaterial.emissiveIntensity = 4.4;
 
   const slot = new THREE.Mesh(
-    new THREE.CylinderGeometry(.38, .38, .12, 36),
+    new THREE.CylinderGeometry(.42, .42, .10, 36),
     slotMaterial,
   );
   slot.position.y = 1.14;
 
   const haloMaterial = materials.cyanLine.clone();
+  haloMaterial.emissiveIntensity = 4.0;
+
   const halo = new THREE.Mesh(
-    new THREE.TorusGeometry(.67, .035, 12, 64),
+    new THREE.TorusGeometry(.68, .032, 12, 72),
     haloMaterial,
   );
   halo.rotation.x = Math.PI / 2;
   halo.position.y = 1.18;
 
   const innerHalo = new THREE.Mesh(
-    new THREE.TorusGeometry(.48, .018, 10, 56),
+    new THREE.TorusGeometry(.49, .018, 10, 64),
     haloMaterial.clone(),
   );
   innerHalo.rotation.x = Math.PI / 2;
   innerHalo.position.y = 1.19;
 
   const energyColumn = new THREE.Mesh(
-    new THREE.CylinderGeometry(.16, .24, .30, 24, 1, true),
+    new THREE.CylinderGeometry(.12, .20, .36, 24, 1, true),
     new THREE.MeshBasicMaterial({
       color: 0x8ff4ff,
       transparent: true,
-      opacity: .42,
+      opacity: .46,
       depthWrite: false,
       side: THREE.DoubleSide,
       blending: THREE.AdditiveBlending,
     }),
   );
-  energyColumn.position.y = 1.32;
+  energyColumn.position.y = 1.34;
 
-  const light = new THREE.PointLight(0x4ee5ff, 0, 5, 2);
-  light.position.y = 1.35;
+  const light = new THREE.PointLight(0x4ee5ff, 0, 5.4, 2);
+  light.position.y = 1.36;
 
   group.add(
     basePlate,
     lowerRing,
+    lowerStoneRing,
     body,
+    metalBand,
+    upperStone,
     topBasin,
     basinInner,
     slot,
@@ -208,65 +263,131 @@ export function createGenerator(materials) {
     light,
   );
 
+  // Chunky stone/metal modules around the body make the machine feel
+  // integrated into the old ruins instead of like a clean sci-fi prop.
   for (let i = 0; i < 8; i += 1) {
     const angle = (i / 8) * Math.PI * 2;
+    const radius = .96;
 
-    const segment = new THREE.Mesh(
-      new THREE.BoxGeometry(.42, .26, .34),
-      i % 2 === 0 ? materials.stone : materials.dark,
+    const buttress = new THREE.Mesh(
+      new THREE.BoxGeometry(.34, .34, .38),
+      i % 2 === 0 ? stone : stoneDark,
     );
-    segment.position.set(
-      Math.cos(angle) * .98,
-      .54,
-      Math.sin(angle) * .98,
+    buttress.position.set(
+      Math.cos(angle) * radius,
+      .56,
+      Math.sin(angle) * radius,
     );
-    segment.rotation.y = -angle;
-    segment.castShadow = true;
-    group.add(segment);
+    buttress.rotation.y = -angle + Math.PI / 2;
+    buttress.castShadow = true;
+    buttress.receiveShadow = true;
+    group.add(buttress);
+
+    const clamp = new THREE.Mesh(
+      new THREE.BoxGeometry(.18, .20, .10),
+      metal,
+    );
+    clamp.position.set(
+      Math.cos(angle) * 1.08,
+      .70,
+      Math.sin(angle) * 1.08,
+    );
+    clamp.rotation.y = -angle + Math.PI / 2;
+    clamp.castShadow = true;
+    group.add(clamp);
 
     const bolt = new THREE.Mesh(
-      new THREE.CylinderGeometry(.035, .035, .07, 10),
-      materials.gold,
+      new THREE.CylinderGeometry(.034, .034, .075, 10),
+      brass,
     );
     bolt.rotation.x = Math.PI / 2;
     bolt.position.set(
-      Math.cos(angle) * 1.08,
-      .57,
-      Math.sin(angle) * 1.08,
+      Math.cos(angle) * 1.10,
+      .72,
+      Math.sin(angle) * 1.10,
     );
     group.add(bolt);
   }
 
-  for (let i = 0; i < 4; i += 1) {
-    const angle = (i / 4) * Math.PI * 2;
-    const brace = new THREE.Mesh(
-      new THREE.BoxGeometry(.22, .34, .13),
-      materials.dark,
-    );
-    brace.position.set(
+  // Cyan conduit pipes around the generator, visually matching the target.
+  const pipeMaterial = new THREE.MeshStandardMaterial({
+    color: 0x173845,
+    metalness: .62,
+    roughness: .38,
+  });
+
+  const pipeGlow = materials.cyanLine.clone();
+  pipeGlow.emissiveIntensity = 3.6;
+
+  const pipeAngles = [-2.55, -1.35, -.20, .95];
+
+  pipeAngles.forEach((angle) => {
+    const start = new THREE.Vector3(
       Math.cos(angle) * .72,
-      .82,
+      .38,
       Math.sin(angle) * .72,
     );
-    brace.rotation.y = -angle;
-    brace.castShadow = true;
-    group.add(brace);
-  }
+    const mid = new THREE.Vector3(
+      Math.cos(angle) * 1.06,
+      .30,
+      Math.sin(angle) * 1.06,
+    );
+    const end = new THREE.Vector3(
+      Math.cos(angle) * 1.28,
+      .18,
+      Math.sin(angle) * 1.28,
+    );
 
-  for (let i = 0; i < 3; i += 1) {
-    const angle = -.55 + i * .55;
-    const port = new THREE.Mesh(
-      new THREE.CylinderGeometry(.11, .11, .26, 18),
-      materials.dark,
+    const curve = new THREE.CatmullRomCurve3([start, mid, end]);
+
+    const pipe = new THREE.Mesh(
+      new THREE.TubeGeometry(curve, 18, .075, 8, false),
+      pipeMaterial,
     );
-    port.rotation.z = Math.PI / 2;
-    port.rotation.y = -angle;
-    port.position.set(
-      Math.cos(angle) * .95,
-      .38,
-      Math.sin(angle) * .95,
+    pipe.castShadow = true;
+    group.add(pipe);
+
+    const glow = new THREE.Mesh(
+      new THREE.TubeGeometry(curve, 18, .025, 6, false),
+      pipeGlow,
     );
-    group.add(port);
+    group.add(glow);
+  });
+
+  // Front energy socket to visually connect with the cable toward the gate.
+  const socket = new THREE.Group();
+  socket.position.set(.74, .42, .66);
+  socket.rotation.y = -.78;
+
+  const socketBase = new THREE.Mesh(
+    new THREE.CylinderGeometry(.16, .16, .22, 14),
+    metal,
+  );
+  socketBase.rotation.z = Math.PI / 2;
+
+  const socketGlow = new THREE.Mesh(
+    new THREE.CylinderGeometry(.10, .10, .235, 14),
+    slotMaterial.clone(),
+  );
+  socketGlow.rotation.z = Math.PI / 2;
+
+  socket.add(socketBase, socketGlow);
+  group.add(socket);
+
+  // Small warm hardware accents break up the cyan and tie into the gate.
+  for (let i = 0; i < 4; i += 1) {
+    const angle = .35 + i * (Math.PI / 2);
+    const plate = new THREE.Mesh(
+      new THREE.BoxGeometry(.17, .09, .12),
+      brass,
+    );
+    plate.position.set(
+      Math.cos(angle) * .86,
+      .88,
+      Math.sin(angle) * .86,
+    );
+    plate.rotation.y = -angle;
+    group.add(plate);
   }
 
   group.userData = {
