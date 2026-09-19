@@ -226,6 +226,8 @@ const materials = {
 scene.add(createFloatingIsland(materials));
 addCloudscape(scene, materials);
 
+const CORE_PLAY_SCALE = .72;
+
 const robot = createRobot(materials);
 robot.position.set(-2.75, .90, .30);
 scene.add(robot);
@@ -233,6 +235,7 @@ scene.add(robot);
 const coreEntries = level01.cores.map((config) => {
   const object = createEnergyCore(materials, config.value);
   object.position.set(...config.position);
+  object.scale.setScalar(CORE_PLAY_SCALE);
   scene.add(object);
 
   const pedestal = createCorePedestal(materials, config.value);
@@ -773,7 +776,7 @@ function attachCoreToRobot(entry) {
   robot.userData.visual.add(entry.object);
 
   entry.object.position.set(0, -.12, 1.34);
-  entry.object.scale.setScalar(.72);
+  entry.object.scale.setScalar(CORE_PLAY_SCALE);
   entry.state = 'carried';
   carryingEntry = entry;
 
