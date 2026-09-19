@@ -272,7 +272,7 @@ function createLocalCliffMass(group, materials, rand) {
   warm.map = null;
   warm.bumpMap = null;
   warm.roughnessMap = null;
-  warm.color.setHex(0x8f806e);
+  warm.color.setHex(0x948572);
   warm.roughness = .98;
   warm.metalness = 0;
 
@@ -280,43 +280,81 @@ function createLocalCliffMass(group, materials, rand) {
   mid.map = null;
   mid.bumpMap = null;
   mid.roughnessMap = null;
-  mid.color.setHex(0x6f665c);
+  mid.color.setHex(0x6b6258);
   mid.roughness = 1;
   mid.metalness = 0;
 
   const dark = mid.clone();
   dark.color.setHex(0x4f4942);
 
-  const upper = [
-    [-2.95, -.62,  1.20, 1.10, .82, 1.00, .20],
-    [-1.90, -.70,  1.28, 1.22, .92, 1.08, .85],
-    [-.72,  -.72,  1.18, 1.30, .98, 1.12, 1.55],
-    [.55,  -.72,  1.14, 1.34, .98, 1.10, 2.15],
-    [1.78, -.68,  1.00, 1.22, .90, 1.04, 2.78],
-    [2.78, -.60,   .74, 1.02, .76,  .94, 3.38],
-    [-2.88, -.64, -.92, 1.08, .82,  .98, 1.00],
-    [-1.72, -.72, -1.18, 1.26, .94, 1.08, 1.65],
-    [-.42,  -.76, -1.22, 1.34, 1.02, 1.14, 2.30],
-    [.90,  -.74, -1.16, 1.30, .98, 1.10, 2.92],
-    [2.10, -.68, -1.00, 1.18, .88, 1.02, 3.42],
-    [2.94, -.60,  -.56, 1.00, .74,  .92, 4.00],
+  // Broad rocky shoulder immediately under the island.
+  const shoulder = [
+    [-3.05, -.58,  1.36, 1.02, .70, .92, .22],
+    [-2.08, -.62,  1.46, 1.14, .78, 1.00, .78],
+    [-1.02, -.66,  1.44, 1.20, .84, 1.06, 1.30],
+    [.08,  -.66,  1.40, 1.24, .86, 1.08, 1.88],
+    [1.18, -.64,  1.34, 1.18, .82, 1.04, 2.45],
+    [2.18, -.60,  1.20, 1.10, .76, .98, 3.00],
+    [3.00, -.56,   .90, .96, .68, .90, 3.50],
+
+    [-3.14, -.58, -.90, .98, .70, .92, .86],
+    [-2.20, -.62, -1.22, 1.10, .78, .98, 1.36],
+    [-1.16, -.66, -1.38, 1.18, .84, 1.04, 1.96],
+    [-.04,  -.68, -1.42, 1.24, .88, 1.08, 2.50],
+    [1.10, -.66, -1.36, 1.18, .84, 1.04, 3.00],
+    [2.14, -.62, -1.16, 1.08, .76, .98, 3.52],
+    [3.00, -.58,  -.78, .94, .68, .88, 4.02],
   ];
 
-  upper.forEach(([x, y, z, sx, sy, sz, yaw], index) => {
+  shoulder.forEach(([x, y, z, sx, sy, sz, yaw], index) => {
     const rock = new THREE.Mesh(
       new THREE.DodecahedronGeometry(1, 1),
-      index % 4 === 0 ? mid : warm,
+      index % 5 === 0 ? mid : warm,
     );
 
     rock.scale.set(sx, sy, sz);
     rock.position.set(
       x + (rand() - .5) * .08,
-      y + (rand() - .5) * .06,
+      y + (rand() - .5) * .05,
       z + (rand() - .5) * .08,
     );
     rock.rotation.set(
-      (rand() - .5) * .14,
-      yaw + (rand() - .5) * .18,
+      (rand() - .5) * .10,
+      yaw + (rand() - .5) * .14,
+      (rand() - .5) * .08,
+    );
+    rock.castShadow = true;
+    rock.receiveShadow = true;
+    group.add(rock);
+  });
+
+  // Wider middle layer; this is what makes the island feel heavy instead of cone-like.
+  const middle = [
+    [-2.55, -1.26,  .82, 1.02, 1.18, .92, .40],
+    [-1.55, -1.40,  .88, 1.14, 1.34, 1.00, 1.05],
+    [-.48,  -1.50,  .82, 1.22, 1.46, 1.06, 1.72],
+    [.64,  -1.50,  .76, 1.20, 1.46, 1.04, 2.36],
+    [1.70, -1.38,  .66, 1.10, 1.30, .98, 2.98],
+    [2.52, -1.20,  .48, .94, 1.10, .86, 3.54],
+
+    [-2.40, -1.28, -.70, .98, 1.18, .90, 1.08],
+    [-1.36, -1.42, -.80, 1.12, 1.34, .98, 1.72],
+    [-.24,  -1.52, -.78, 1.20, 1.48, 1.04, 2.34],
+    [.92,  -1.48, -.70, 1.16, 1.42, 1.00, 2.94],
+    [1.94, -1.34, -.58, 1.04, 1.24, .94, 3.48],
+  ];
+
+  middle.forEach(([x, y, z, sx, sy, sz, yaw], index) => {
+    const rock = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(1, 0),
+      index % 4 === 0 ? warm : mid,
+    );
+
+    rock.scale.set(sx, sy, sz);
+    rock.position.set(x, y, z);
+    rock.rotation.set(
+      .05 + (rand() - .5) * .10,
+      yaw,
       (rand() - .5) * .10,
     );
     rock.castShadow = true;
@@ -324,51 +362,46 @@ function createLocalCliffMass(group, materials, rand) {
     group.add(rock);
   });
 
-  const middle = [
-    [-2.25, -1.48,  .62, .92, 1.34, .84, .40],
-    [-1.08, -1.66,  .54, 1.02, 1.54, .92, 1.22],
-    [.20,  -1.76,  .46, 1.08, 1.68, .96, 2.08],
-    [1.46, -1.60,  .36, .98, 1.50, .90, 2.86],
-    [2.38, -1.40,  .22, .84, 1.24, .78, 3.58],
-    [-1.92, -1.54, -.54, .90, 1.40, .84, 1.04],
-    [-.68,  -1.74, -.48, 1.02, 1.62, .92, 1.88],
-    [.68,  -1.72, -.44, 1.04, 1.58, .94, 2.66],
-    [1.88, -1.50, -.36, .90, 1.32, .84, 3.34],
-  ];
-
-  middle.forEach(([x, y, z, sx, sy, sz, yaw], index) => {
-    const rock = new THREE.Mesh(
-      new THREE.DodecahedronGeometry(1, 0),
-      index % 3 === 0 ? warm : mid,
-    );
-    rock.scale.set(sx, sy, sz);
-    rock.position.set(x, y, z);
-    rock.rotation.set(
-      .06 + (rand() - .5) * .12,
-      yaw,
-      (rand() - .5) * .12,
-    );
-    rock.castShadow = true;
-    rock.receiveShadow = true;
-    group.add(rock);
-  });
-
-  const keel = new THREE.Mesh(
-    new THREE.CylinderGeometry(.42, 1.10, 2.65, 7, 1, false),
+  // Compact lower core: tapered, but still broad — no long stalactite.
+  const core = new THREE.Mesh(
+    new THREE.CylinderGeometry(.86, 1.52, 1.70, 8, 1, false),
     dark,
   );
-  keel.position.set(-.05, -2.48, 0);
-  keel.rotation.y = .24;
-  keel.castShadow = true;
-  keel.receiveShadow = true;
-  group.add(keel);
+  core.position.set(-.08, -2.30, .02);
+  core.rotation.y = .18;
+  core.scale.z = .86;
+  core.castShadow = true;
+  core.receiveShadow = true;
+  group.add(core);
+
+  const lowerA = new THREE.Mesh(
+    new THREE.DodecahedronGeometry(1, 0),
+    dark,
+  );
+  lowerA.scale.set(.88, .92, .76);
+  lowerA.position.set(-.72, -2.98, .12);
+  lowerA.rotation.set(.10, .52, -.12);
+  lowerA.castShadow = true;
+  lowerA.receiveShadow = true;
+  group.add(lowerA);
+
+  const lowerB = new THREE.Mesh(
+    new THREE.DodecahedronGeometry(1, 0),
+    mid,
+  );
+  lowerB.scale.set(.72, .80, .68);
+  lowerB.position.set(.62, -2.92, -.08);
+  lowerB.rotation.set(-.08, 1.10, .10);
+  lowerB.castShadow = true;
+  lowerB.receiveShadow = true;
+  group.add(lowerB);
 
   const tip = new THREE.Mesh(
-    new THREE.ConeGeometry(.64, 1.42, 7),
+    new THREE.ConeGeometry(.62, .82, 7),
     dark,
   );
-  tip.position.set(-.08, -3.88, .02);
-  tip.rotation.y = -.18;
+  tip.position.set(-.10, -3.55, .00);
+  tip.rotation.y = -.16;
   tip.castShadow = true;
   tip.receiveShadow = true;
   group.add(tip);
