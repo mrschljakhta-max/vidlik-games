@@ -114,8 +114,8 @@ const doorCaption = document.querySelector('#door-caption');
 document.querySelector('#restart').addEventListener('click', () => location.reload());
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0b2237);
-scene.fog = new THREE.FogExp2(0x8ec8df, .023);
+scene.background = new THREE.Color(0x91c5ef);
+scene.fog = new THREE.FogExp2(0xd5ebfb, .014);
 
 const camera = new THREE.PerspectiveCamera(
   38,
@@ -134,15 +134,15 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(host.clientWidth, host.clientHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.20;
+renderer.toneMappingExposure = 1.34;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 host.append(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0xd8f4ff, 0x27313d, 2.65));
+scene.add(new THREE.HemisphereLight(0xf4fbff, 0x516273, 3.4));
 
-const sun = new THREE.DirectionalLight(0xfff1d5, 4.8);
-sun.position.set(7, 10, 6);
+const sun = new THREE.DirectionalLight(0xffe6b5, 6.4);
+sun.position.set(8.5, 11.5, 5.5);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 sun.shadow.camera.left = -10;
@@ -151,13 +151,21 @@ sun.shadow.camera.top = 10;
 sun.shadow.camera.bottom = -10;
 scene.add(sun);
 
-const ambientCyan = new THREE.PointLight(0x4ee5ff, 8, 10, 2);
-ambientCyan.position.set(-1.2, 1.8, 2.0);
-scene.add(ambientCyan);
+const skyFill = new THREE.PointLight(0x88dfff, 6.2, 12, 2);
+skyFill.position.set(-3.0, 4.0, 2.8);
+scene.add(skyFill);
 
-const warmFill = new THREE.PointLight(0xffb34d, 5, 8, 2);
-warmFill.position.set(3.6, 3.0, 2.5);
+const warmFill = new THREE.PointLight(0xffc06b, 6.6, 10, 2);
+warmFill.position.set(4.1, 3.1, 2.8);
 scene.add(warmFill);
+
+const rimLight = new THREE.PointLight(0xffe0a2, 3.4, 9, 2);
+rimLight.position.set(-4.2, 2.4, -2.8);
+scene.add(rimLight);
+
+const portalAccent = new THREE.PointLight(0x5fe7ff, 2.4, 7, 2);
+portalAccent.position.set(3.4, 1.4, -1.3);
+scene.add(portalAccent);
 
 const materials = {
   rock: new THREE.MeshPhysicalMaterial({
@@ -230,6 +238,7 @@ const CORE_PLAY_SCALE = .72;
 
 const robot = createRobot(materials);
 robot.position.set(-2.75, .90, .30);
+robot.scale.setScalar(.68);
 scene.add(robot);
 
 const coreEntries = level01.cores.map((config) => {
@@ -674,6 +683,10 @@ function setGeneratorColor(colorHex, intensity = 3) {
   generator.userData.innerHalo.material.emissiveIntensity = intensity;
 
   generator.userData.light.color.setHex(colorHex);
+
+  if (generator.userData.energyColumn) {
+    generator.userData.energyColumn.material.color.setHex(colorHex);
+  }
 }
 
 function updateCoreTags() {
@@ -1337,6 +1350,13 @@ function render() {
 
   generator.userData.halo.rotation.z += generatorSpeed;
   generator.userData.innerHalo.rotation.z -= generatorSpeed * .7;
+
+  if (generator.userData.energyColumn) {
+    generator.userData.energyColumn.material.opacity =
+      .26 + Math.sin(time * (powered ? 8 : 4)) * .08;
+    generator.userData.energyColumn.scale.y =
+      1 + Math.sin(time * (powered ? 7 : 3)) * .08;
+  }
 
   if (currentValue > level01.generator.targetValue) {
     generator.userData.light.intensity = 6.2 + Math.sin(time * 11) * 1.8;
