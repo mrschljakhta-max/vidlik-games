@@ -88,9 +88,9 @@ function createGrassTexture() {
       const noise = (rand() - .5) * 8;
       const variation = broad + noise;
 
-      image.data[i] = Math.max(0, Math.min(255, 119 + variation));
-      image.data[i + 1] = Math.max(0, Math.min(255, 162 + variation * 1.15));
-      image.data[i + 2] = Math.max(0, Math.min(255, 86 + variation * .75));
+      image.data[i] = Math.max(0, Math.min(255, 104 + variation * .85));
+      image.data[i + 1] = Math.max(0, Math.min(255, 170 + variation * 1.25));
+      image.data[i + 2] = Math.max(0, Math.min(255, 72 + variation * .62));
       image.data[i + 3] = 255;
     }
   }
@@ -99,9 +99,9 @@ function createGrassTexture() {
 
   // Very soft broad tinting. No tiles, squares or visible repeating cells.
   const gradients = [
-    [130, 125, 120, 'rgba(169,188,105,.10)'],
-    [390, 155, 150, 'rgba(94,132,69,.10)'],
-    [275, 385, 135, 'rgba(156,174,91,.08)'],
+    [130, 125, 120, 'rgba(194,206,104,.12)'],
+    [390, 155, 150, 'rgba(76,128,52,.11)'],
+    [275, 385, 135, 'rgba(171,193,82,.10)'],
   ];
 
   gradients.forEach(([x, y, radius, color]) => {
@@ -531,6 +531,92 @@ function createStonePath(group, material, rand) {
   });
 }
 
+
+function createRuinClusters(group, materials, rand) {
+  const stone = materials.stone.clone();
+  stone.color.setHex(0xb5a88f);
+  stone.roughness = .96;
+
+  const moss = materials.grass.clone();
+  moss.map = null;
+  moss.bumpMap = null;
+  moss.roughnessMap = null;
+  moss.color.setHex(0x668c48);
+  moss.roughness = 1;
+
+  const clusters = [
+    [-2.82, 1.62, 3, .55],
+    [-1.92, 2.03, 2, -.28],
+    [2.45, 1.72, 3, .20],
+    [2.82, -.98, 2, -.46],
+    [-3.06, -.88, 2, .34],
+  ];
+
+  clusters.forEach(([x, z, levels, rot], clusterIndex) => {
+    for (let i = 0; i < levels; i += 1) {
+      const block = new THREE.Mesh(
+        new THREE.BoxGeometry(.46, .34, .42),
+        stone,
+      );
+
+      block.position.set(
+        x + (rand() - .5) * .14,
+        .25 + i * .30,
+        z + (rand() - .5) * .12,
+      );
+      block.rotation.set(
+        (rand() - .5) * .04,
+        rot + (rand() - .5) * .12,
+        (rand() - .5) * .05,
+      );
+      block.scale.set(
+        .92 + rand() * .16,
+        .92 + rand() * .12,
+        .92 + rand() * .16,
+      );
+      block.castShadow = true;
+      block.receiveShadow = true;
+      group.add(block);
+    }
+
+    if (clusterIndex !== 3) {
+      const cap = new THREE.Mesh(
+        new THREE.BoxGeometry(.48, .055, .44),
+        moss,
+      );
+      cap.position.set(x, .27 + (levels - 1) * .30, z);
+      cap.rotation.y = rot;
+      group.add(cap);
+    }
+  });
+
+  const brokenWalls = [
+    [-2.68, 1.95, 1.02, .42, .22],
+    [2.60, 1.88, .92, .46, -.18],
+    [-3.22, .86, .76, .40, .08],
+  ];
+
+  brokenWalls.forEach(([x, z, width, height, rot]) => {
+    const wall = new THREE.Mesh(
+      new THREE.BoxGeometry(width, height, .30),
+      stone,
+    );
+    wall.position.set(x, .20 + height * .5, z);
+    wall.rotation.y = rot;
+    wall.castShadow = true;
+    wall.receiveShadow = true;
+    group.add(wall);
+
+    const topMoss = new THREE.Mesh(
+      new THREE.BoxGeometry(width * .90, .045, .28),
+      moss,
+    );
+    topMoss.position.set(x, .225 + height, z);
+    topMoss.rotation.y = rot;
+    group.add(topMoss);
+  });
+}
+
 function createDoorFoundation(group, materials) {
   const baseMaterial = materials.stone.clone();
   baseMaterial.color.setHex(0xa69a87);
@@ -672,13 +758,18 @@ export function createFloatingIsland(baseMaterials) {
   createSurfaceVariation(island);
   createSoftEdgeStones(island, materials, rand);
   createStonePath(island, materials.path, rand);
+  createRuinClusters(island, materials, rand);
   createDoorFoundation(island, materials);
   createGeneratorFoundation(island, materials);
 
   const flowerPositions = [
-    [-2.30, -1.88, .66],
+    [-2.72, -1.72, .66],
+    [-2.30, 1.54, .58],
+    [-1.10, -1.92, .56],
     [.38, -1.96, .60],
-    [2.62, 1.20, .56],
+    [1.92, -1.70, .58],
+    [2.62, 1.20, .62],
+    [2.15, 1.72, .52],
   ];
 
   flowerPositions.forEach(([x, z, scale]) => {
@@ -688,10 +779,12 @@ export function createFloatingIsland(baseMaterials) {
   });
 
   [
-    [-3.12, -2.08, .78],
-    [-3.20, 1.98, .78],
-    [2.76, 1.94, .76],
-    [3.05, -.20, .74],
+    [-3.12, -2.08, .82],
+    [-3.20, 1.98, .82],
+    [-1.46, 2.20, .72],
+    [2.76, 1.94, .82],
+    [3.05, -.20, .78],
+    [2.38, -1.92, .74],
   ].forEach(([x, z, scale]) => {
     const lantern = createLantern(baseMaterials, scale);
     lantern.position.set(x, .09, z);
