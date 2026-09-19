@@ -703,39 +703,9 @@ export function createFloatingIsland(baseMaterials) {
 
 export function addCloudscape(scene, baseMaterials) {
   const materials = createEnvironmentMaterials(baseMaterials);
-  const rand = seededRandom(91);
 
-  const cloudMaterial = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    transparent: true,
-    opacity: .32,
-    roughness: 1,
-    depthWrite: false,
-  });
-
-  // Softer background: fewer, smaller clouds so they do not compete
-  // with the island silhouette.
-  for (let i = 0; i < 22; i += 1) {
-    const cloud = new THREE.Mesh(
-      new THREE.SphereGeometry(.52 + rand() * .54, 18, 12),
-      cloudMaterial,
-    );
-
-    cloud.scale.set(
-      1.55 + rand() * 1.35,
-      .40 + rand() * .30,
-      .90 + rand() * .75,
-    );
-
-    cloud.position.set(
-      (rand() - .5) * 25,
-      -4.1 - rand() * 3.2,
-      (rand() - .5) * 20,
-    );
-
-    scene.add(cloud);
-  }
-
+  // Clouds are handled by CloudField.js.
+  // This function now keeps only the distant floating islands/waterfalls.
   const waterfallMaterial = new THREE.MeshBasicMaterial({
     color: 0x83e5ff,
     transparent: true,
