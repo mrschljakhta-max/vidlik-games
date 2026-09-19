@@ -21,6 +21,20 @@ import {
 
 const app = document.querySelector('#app');
 
+const coreTagsMarkup = level01.cores.map((core) => {
+  const polarityClass = core.value < 0 ? 'world-tag--negative' : 'world-tag--cyan';
+  const description = core.value < 0
+    ? 'Ядро відтоку · забирає енергію'
+    : 'Енергетичне ядро · додає енергію';
+
+  return `
+    <div id="tag-${core.id}" class="world-tag ${polarityClass} world-tag--active">
+      <strong>${core.label}</strong>
+      <span>${description}</span>
+    </div>
+  `;
+}).join('');
+
 app.innerHTML = `
 <main class="game-shell">
   <header class="hud">
@@ -44,8 +58,13 @@ app.innerHTML = `
 
   <section class="panel mission">
     <small>ПОТОЧНЕ ЗАВДАННЯ</small>
-    <h1 id="mission-title">Заряди генератор до ${level01.generator.targetValue}</h1>
-    <p id="mission-text">Знайди світне ядро <b>+${level01.cores[0].value}</b>.</p>
+    <h1 id="mission-title">Збалансуй генератор до ${level01.generator.targetValue}</h1>
+    <p id="mission-text">Додавай і віднімай енергію ядрами. Двері відкриються лише при точному балансі.</p>
+    <div id="equation-trail" class="equation-trail">
+      <span>${level01.generator.startValue}</span>
+      <i>→</i>
+      <strong>${level01.generator.targetValue}</strong>
+    </div>
   </section>
 
   <button id="restart" class="restart" type="button">↻ Заново</button>
@@ -56,19 +75,16 @@ app.innerHTML = `
     <span>${level01.completion.equation}</span>
   </div>
 
-  <div id="core-tag" class="world-tag world-tag--cyan world-tag--active">
-    <strong>+2</strong>
-    <span>Енергетичне ядро</span>
-  </div>
+  ${coreTagsMarkup}
 
-  <div id="generator-tag" class="world-tag">
-    <strong id="generator-value">3 / 5</strong>
-    <span id="generator-caption">Генератор</span>
+  <div id="generator-tag" class="world-tag world-tag--active">
+    <strong id="generator-value">${level01.generator.startValue} / ${level01.generator.targetValue}</strong>
+    <span id="generator-caption">Недостатньо енергії</span>
   </div>
 
   <div id="door-tag" class="world-tag">
     <strong id="door-value">ЗАЧИНЕНО</strong>
-    <span id="door-caption">Потрібен заряд 5</span>
+    <span id="door-caption">Потрібен точний баланс ${level01.generator.targetValue}</span>
   </div>
 </main>
 `;
@@ -77,8 +93,8 @@ const host = document.querySelector('#scene');
 const status = document.querySelector('#status');
 const title = document.querySelector('#mission-title');
 const text = document.querySelector('#mission-text');
+const equationTrail = document.querySelector('#equation-trail');
 const complete = document.querySelector('#complete');
-const coreTag = document.querySelector('#core-tag');
 const generatorTag = document.querySelector('#generator-tag');
 const generatorValue = document.querySelector('#generator-value');
 const generatorCaption = document.querySelector('#generator-caption');
@@ -205,13 +221,25 @@ const robot = createRobot(materials);
 robot.position.set(-2.75, .90, .30);
 scene.add(robot);
 
-const core = createEnergyCore(materials, level01.cores[0].value);
-core.position.set(...level01.cores[0].position);
-scene.add(core);
+const coreEntries = level01.cores.map((config) => {
+  const object = createEnergyCore(materials, config.value);
+  object.position.set(...config.position);
+  scene.add(object);
 
-const pedestal = createCorePedestal(materials);
-pedestal.position.set(core.position.x, .04, core.position.z);
-scene.add(pedestal);
+  const pedestal = createCorePedestal(materials, config.value);
+  pedestal.position.set(config.position[0], .04, config.position[2]);
+  scene.add(pedestal);
+
+  const tag = document.querySelector(`#tag-${config.id}`);
+
+  return {
+    config,
+    object,
+    pedestal,
+    tag,
+    state: 'world',
+  };
+});
 
 const generator = createGenerator(materials);
 generator.position.set(1.30, .15, .50);
@@ -230,6 +258,7 @@ const exitRing = new THREE.Mesh(
   materials.cyanLine.clone(),
 );
 exitRing.rotation.x = Math.PI / 2;
+
 const exitInner = new THREE.Mesh(
   new THREE.CircleGeometry(.31, 32),
   new THREE.MeshBasicMaterial({
@@ -242,15 +271,16 @@ const exitInner = new THREE.Mesh(
 );
 exitInner.rotation.x = -Math.PI / 2;
 exitInner.position.y = -.01;
+
 const exitLight = new THREE.PointLight(0x54e5ff, 6, 3.4, 2);
 exitLight.position.y = .25;
+
 exit.add(exitRing, exitInner, exitLight);
 exit.position.set(3.45, .10, -2.15);
 exit.visible = false;
 scene.add(exit);
 
 const path = {
-  corePickup: new THREE.Vector3(-1.55, .90, 1.62),
   generatorApproach: new THREE.Vector3(-.15, .90, 1.78),
   doorLane: new THREE.Vector3(2.65, .90, 2.25),
   doorApproach: new THREE.Vector3(3.45, .90, -.10),
@@ -258,15 +288,23 @@ const path = {
   exit: new THREE.Vector3(3.45, .90, -2.15),
 };
 
+const installedOffsets = [
+  new THREE.Vector3(-.38, 1.38, .18),
+  new THREE.Vector3(.38, 1.38, .18),
+];
+
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
-const interactables = [core, generator, exit];
 
-let phase = 'core';
+let phase = 'puzzle';
 let moving = false;
 let powered = false;
 let doorOpen = false;
+let puzzleSolved = false;
 let energyLoopStart = 0;
+let carryingEntry = null;
+let currentValue = level01.generator.startValue;
+let installedOrder = [];
 
 const keys = new Set();
 const manualVelocity = new THREE.Vector3();
@@ -293,11 +331,17 @@ const islandBounds = {
 
 function belongsTo(object, root) {
   let current = object;
+
   while (current) {
     if (current === root) return true;
     current = current.parent;
   }
+
   return false;
+}
+
+function distanceXZ(a, b) {
+  return Math.hypot(a.x - b.x, a.z - b.z);
 }
 
 function getLookQuaternion(from, to) {
@@ -309,13 +353,10 @@ function getLookQuaternion(from, to) {
   }
 
   const yaw = Math.atan2(direction.x, direction.z);
+
   return new THREE.Quaternion().setFromEuler(
     new THREE.Euler(0, yaw, 0),
   );
-}
-
-function distanceXZ(a, b) {
-  return Math.hypot(a.x - b.x, a.z - b.z);
 }
 
 function canManualControl() {
@@ -332,14 +373,17 @@ function isBlockedPosition(position) {
     return true;
   }
 
-  const generatorCenter = generator.position;
-  if (distanceXZ(position, generatorCenter) < 1.55) {
+  if (distanceXZ(position, generator.position) < 1.55) {
     return true;
   }
 
-  const pedestalCenter = pedestal.position;
-  if (distanceXZ(position, pedestalCenter) < .95) {
-    return true;
+  for (const entry of coreEntries) {
+    if (
+      entry.state === 'world' &&
+      distanceXZ(position, entry.pedestal.position) < .92
+    ) {
+      return true;
+    }
   }
 
   const doorZ = door.position.z;
@@ -397,6 +441,7 @@ function updateManualMovement(delta) {
     12,
     delta,
   );
+
   manualVelocity.z = THREE.MathUtils.damp(
     manualVelocity.z,
     desiredMove.z,
@@ -428,6 +473,7 @@ function updateManualMovement(delta) {
     const lookTarget = robot.position.clone().add(
       new THREE.Vector3(manualVelocity.x, 0, manualVelocity.z),
     );
+
     const targetQuaternion = getLookQuaternion(robot.position, lookTarget);
     const turnAmount = 1 - Math.exp(-11 * delta);
     robot.quaternion.slerp(targetQuaternion, turnAmount);
@@ -509,72 +555,287 @@ function flyRoute(points, durations, done) {
   run(0);
 }
 
-function pickCore() {
-  if (phase !== 'core' || moving) return;
+function formatSigned(value) {
+  if (value > 0) return `+${value}`;
+  return `−${Math.abs(value)}`;
+}
+
+function updateEquationTrail() {
+  let running = level01.generator.startValue;
+  const values = [running];
+
+  for (const id of installedOrder) {
+    const entry = coreEntries.find((item) => item.config.id === id);
+    running += entry.config.value;
+    values.push(running);
+  }
+
+  equationTrail.innerHTML = values
+    .map((value, index) => {
+      const className = index === values.length - 1 ? 'current' : '';
+      return `<span class="${className}">${value}</span>`;
+    })
+    .join('<i>→</i>');
+
+  if (!puzzleSolved && values[values.length - 1] !== level01.generator.targetValue) {
+    equationTrail.insertAdjacentHTML(
+      'beforeend',
+      `<i>→</i><strong>${level01.generator.targetValue}</strong>`,
+    );
+  }
+}
+
+function setGeneratorColor(colorHex, intensity = 3) {
+  generator.userData.slot.material.color.setHex(colorHex);
+  generator.userData.slot.material.emissive.setHex(colorHex);
+  generator.userData.slot.material.emissiveIntensity = intensity;
+
+  generator.userData.halo.material.color.setHex(colorHex);
+  generator.userData.halo.material.emissive.setHex(colorHex);
+  generator.userData.halo.material.emissiveIntensity = intensity;
+
+  generator.userData.innerHalo.material.color.setHex(colorHex);
+  generator.userData.innerHalo.material.emissive.setHex(colorHex);
+  generator.userData.innerHalo.material.emissiveIntensity = intensity;
+
+  generator.userData.light.color.setHex(colorHex);
+}
+
+function updateCoreTags() {
+  for (const entry of coreEntries) {
+    const caption = entry.tag.querySelector('span');
+
+    entry.tag.classList.toggle(
+      'world-tag--hidden',
+      entry.state === 'carried',
+    );
+
+    if (entry.state === 'installed') {
+      caption.textContent = 'Встановлено · натисни, щоб витягти';
+      entry.tag.classList.add('world-tag--installed');
+      entry.tag.classList.remove('world-tag--active');
+    } else if (entry.state === 'world') {
+      caption.textContent = entry.config.value < 0
+        ? 'Ядро відтоку · забирає енергію'
+        : 'Енергетичне ядро · додає енергію';
+
+      entry.tag.classList.remove('world-tag--installed');
+      entry.tag.classList.toggle(
+        'world-tag--active',
+        !carryingEntry && !puzzleSolved,
+      );
+    }
+  }
+}
+
+function updateGeneratorState({ allowSolve = true } = {}) {
+  generatorValue.textContent = `${currentValue} / ${level01.generator.targetValue}`;
+  updateEquationTrail();
+
+  generatorTag.classList.remove(
+    'world-tag--overload',
+    'world-tag--balanced',
+  );
+
+  if (currentValue < level01.generator.targetValue) {
+    const missing = level01.generator.targetValue - currentValue;
+
+    setGeneratorColor(0x54dfff, 2.5);
+    generatorCaption.textContent = `Недостатньо · бракує ${missing}`;
+    status.textContent = 'Недостатньо енергії';
+
+    if (!puzzleSolved) {
+      title.textContent = `Заряд: ${currentValue} / ${level01.generator.targetValue}`;
+      text.textContent = 'Додай енергію або зміни комбінацію ядер.';
+    }
+
+    return;
+  }
+
+  if (currentValue > level01.generator.targetValue) {
+    const extra = currentValue - level01.generator.targetValue;
+
+    setGeneratorColor(0xff8a2a, 5.3);
+    generatorCaption.textContent = `ПЕРЕВАНТАЖЕННЯ · зайвих ${extra}`;
+    generatorTag.classList.add('world-tag--overload');
+    status.textContent = 'Перевантаження';
+
+    title.textContent = `Перевантаження: ${currentValue} / ${level01.generator.targetValue}`;
+    text.innerHTML = `Забери <b>${extra}</b> одиниці енергії. Спробуй ядро відтоку.`;
+
+    return;
+  }
+
+  setGeneratorColor(0x69ffc8, 6.0);
+  generatorCaption.textContent = 'БАЛАНС';
+  generatorTag.classList.add('world-tag--balanced');
+  status.textContent = 'Баланс досягнуто';
+
+  title.textContent = `${level01.completion.equation}`;
+  text.textContent = 'Точний заряд. Генератор активує прохід.';
+
+  if (allowSolve && !puzzleSolved) {
+    solvePuzzle();
+  }
+}
+
+function placeInstalledCores() {
+  installedOrder.forEach((id, index) => {
+    const entry = coreEntries.find((item) => item.config.id === id);
+    const offset = installedOffsets[index] ?? installedOffsets[installedOffsets.length - 1];
+
+    entry.object.removeFromParent();
+    scene.add(entry.object);
+    entry.object.position.copy(generator.position).add(offset);
+    entry.object.scale.setScalar(.42);
+  });
+}
+
+function dimPedestal(entry, dimmed) {
+  entry.pedestal.userData.ring.material.emissiveIntensity = dimmed ? .4 : 2.4;
+  entry.pedestal.userData.light.intensity = dimmed ? .25 : 3.2;
+}
+
+function attachCoreToRobot(entry) {
+  entry.object.removeFromParent();
+  robot.userData.visual.add(entry.object);
+
+  entry.object.position.set(0, -.12, 1.34);
+  entry.object.scale.setScalar(.72);
+  entry.state = 'carried';
+  carryingEntry = entry;
+
+  setRobotCarry(robot, true);
+  updateCoreTags();
+
+  generatorTag.classList.add('world-tag--active');
+
+  title.textContent = `Несемо ядро ${entry.config.label}`;
+  text.innerHTML = `Натисни на генератор, щоб застосувати <b>${entry.config.label}</b>.`;
+}
+
+function extractInstalledCore(entry) {
+  if (puzzleSolved || carryingEntry || moving || entry.state !== 'installed') return;
+
+  const index = installedOrder.indexOf(entry.config.id);
+
+  if (index >= 0) {
+    installedOrder.splice(index, 1);
+  }
+
+  currentValue -= entry.config.value;
+  placeInstalledCores();
+  updateGeneratorState({ allowSolve: false });
 
   const collect = () => {
-    core.removeFromParent();
-    robot.userData.visual.add(core);
-    core.position.set(0, -.12, 1.34);
-    core.scale.setScalar(.72);
-
-    setRobotCarry(robot, true);
-
-    pedestal.userData.ring.material.emissiveIntensity = .45;
-    pedestal.userData.light.intensity = .35;
-
-    phase = 'generator';
-    status.textContent = 'Ядро знайдено';
-    title.textContent = 'Встав ядро в генератор';
-    text.innerHTML = 'Натисни на генератор <b>3 / 5</b>.';
-
-    coreTag.classList.remove('world-tag--active');
-    coreTag.classList.add('world-tag--hidden');
-    generatorTag.classList.add('world-tag--active');
+    attachCoreToRobot(entry);
+    status.textContent = 'Ядро витягнуто';
   };
 
-  if (distanceXZ(robot.position, path.corePickup) < 1.05) {
+  if (distanceXZ(robot.position, path.generatorApproach) < 1.0) {
     collect();
     return;
   }
 
-  title.textContent = 'Забираємо ядро';
-  text.textContent = 'Робот підлітає до енергетичного ядра.';
-  flyTo(path.corePickup, 680, collect);
+  flyTo(path.generatorApproach, 700, collect);
 }
 
-function animateCoreIntoGenerator(done) {
-  const start = new THREE.Vector3();
-  core.getWorldPosition(start);
+function pickWorldCore(entry) {
+  if (
+    puzzleSolved ||
+    carryingEntry ||
+    moving ||
+    entry.state !== 'world'
+  ) {
+    return;
+  }
 
-  robot.userData.visual.remove(core);
-  scene.add(core);
-  core.position.copy(start);
-  core.scale.setScalar(.55);
+  const approach = new THREE.Vector3(...entry.config.approach);
+
+  const collect = () => {
+    dimPedestal(entry, true);
+    attachCoreToRobot(entry);
+    status.textContent = `Ядро ${entry.config.label} взято`;
+  };
+
+  if (distanceXZ(robot.position, approach) < 1.0) {
+    collect();
+    return;
+  }
+
+  title.textContent = `До ядра ${entry.config.label}`;
+  text.textContent = 'Робот підлітає до ядра.';
+  flyTo(approach, 680, collect);
+}
+
+function animateCoreIntoGenerator(entry, done) {
+  const start = new THREE.Vector3();
+  entry.object.getWorldPosition(start);
+
+  robot.userData.visual.remove(entry.object);
+  scene.add(entry.object);
+
+  entry.object.position.copy(start);
+  entry.object.scale.setScalar(.55);
 
   setRobotCarry(robot, false);
+  carryingEntry = null;
 
-  const end = new THREE.Vector3(1.30, 1.37, .50);
+  const end = generator.position.clone().add(
+    new THREE.Vector3(0, 1.38, .15),
+  );
   const startedAt = performance.now();
 
   const tick = (now) => {
     const u = Math.min(1, (now - startedAt) / 650);
     const eased = 1 - Math.pow(1 - u, 3);
 
-    core.position.lerpVectors(start, end, eased);
-    core.rotation.y += .09;
-    core.scale.setScalar(.55 * (1 - u * .32));
+    entry.object.position.lerpVectors(start, end, eased);
+    entry.object.rotation.y += .09;
+    entry.object.scale.setScalar(.55 * (1 - u * .35));
 
     if (u < 1) {
       requestAnimationFrame(tick);
       return;
     }
 
-    core.visible = false;
+    entry.state = 'installed';
+    installedOrder.push(entry.config.id);
+    currentValue += entry.config.value;
+
+    placeInstalledCores();
+    updateCoreTags();
     done?.();
   };
 
   requestAnimationFrame(tick);
+}
+
+function insertCarriedCore() {
+  if (!carryingEntry || puzzleSolved || moving) return;
+
+  const entry = carryingEntry;
+
+  const install = () => {
+    animateCoreIntoGenerator(entry, () => {
+      generatorTag.classList.remove('world-tag--active');
+
+      status.textContent = `${entry.config.label} застосовано`;
+      updateGeneratorState();
+    });
+  };
+
+  if (distanceXZ(robot.position, path.generatorApproach) < .95) {
+    install();
+    return;
+  }
+
+  title.textContent = `Застосовуємо ${entry.config.label}`;
+  text.textContent = entry.config.value < 0
+    ? 'Ядро відтоку зменшить заряд генератора.'
+    : 'Енергетичне ядро збільшить заряд генератора.';
+
+  flyTo(path.generatorApproach, 760, install);
 }
 
 function energizeDoor(done) {
@@ -611,7 +872,7 @@ function openDoor() {
   const startedAt = performance.now();
 
   doorValue.textContent = 'АКТИВАЦІЯ';
-  doorCaption.textContent = 'Енергія отримана';
+  doorCaption.textContent = 'Баланс підтверджено';
   doorTag.classList.add('world-tag--cyan');
 
   const tick = (now) => {
@@ -636,46 +897,25 @@ function openDoor() {
     doorValue.textContent = 'ВІДКРИТО';
     doorCaption.textContent = 'Прохід активний';
     title.textContent = 'Пройди через двері';
-    text.textContent = 'Натисни на світне кільце за проходом.';
-    doorTag.classList.remove('world-tag--active');
+    text.textContent = 'Проведи робота вручну або натисни на світне кільце.';
   };
 
   requestAnimationFrame(tick);
 }
 
-function powerGenerator() {
-  if (phase !== 'generator' || moving) return;
+function solvePuzzle() {
+  puzzleSolved = true;
+  phase = 'solving';
+  powered = true;
 
-  const activate = () => {
-    animateCoreIntoGenerator(() => {
-      powered = true;
+  generatorTag.classList.remove('world-tag--active');
+  doorTag.classList.add('world-tag--active');
 
-      generatorValue.textContent = '5 / 5';
-      generatorCaption.textContent = 'Заряджено';
-      generatorTag.classList.remove('world-tag--active');
-      generatorTag.classList.add('world-tag--cyan');
-
-      generator.userData.light.intensity = 6.5;
-      generator.userData.slot.material.emissiveIntensity = 5.2;
-
-      status.textContent = 'Генератор активний';
-      title.textContent = '3 + 2 = 5';
-      text.textContent = 'Енергія рухається до дверей.';
-
-      doorTag.classList.add('world-tag--active');
-
-      energizeDoor(openDoor);
-    });
-  };
-
-  if (distanceXZ(robot.position, path.generatorApproach) < .95) {
-    activate();
-    return;
+  for (const entry of coreEntries) {
+    entry.tag.classList.remove('world-tag--active');
   }
 
-  title.textContent = 'Підключаємо ядро';
-  text.textContent = 'Робот займає безпечну позицію біля генератора.';
-  flyTo(path.generatorApproach, 780, activate);
+  energizeDoor(openDoor);
 }
 
 function completeLevel() {
@@ -683,6 +923,7 @@ function completeLevel() {
 
   phase = 'done';
   moving = false;
+
   manualVelocity.set(0, 0, 0);
   manual.verticalVelocity = 0;
   manual.grounded = true;
@@ -706,7 +947,7 @@ function finishLevel() {
 
   phase = 'finishing';
   title.textContent = 'До виходу';
-  text.textContent = 'Робот проходить через відкритий портал.';
+  text.textContent = 'Робот проходить через активований портал.';
 
   flyRoute(
     [
@@ -729,9 +970,19 @@ function getInteractiveHit(event) {
   );
 
   raycaster.setFromCamera(pointer, camera);
-  const hits = raycaster.intersectObjects(interactables, true);
 
+  const interactables = [
+    ...coreEntries.map((entry) => entry.object),
+    generator,
+    exit,
+  ];
+
+  const hits = raycaster.intersectObjects(interactables, true);
   return hits[0]?.object ?? null;
+}
+
+function getCoreEntryFromHit(hit) {
+  return coreEntries.find((entry) => belongsTo(hit, entry.object)) ?? null;
 }
 
 renderer.domElement.addEventListener('pointermove', (event) => {
@@ -741,12 +992,67 @@ renderer.domElement.addEventListener('pointermove', (event) => {
   }
 
   const hit = getInteractiveHit(event);
-  const actionable =
-    (phase === 'core' && hit && belongsTo(hit, core)) ||
-    (phase === 'generator' && hit && belongsTo(hit, generator)) ||
-    (phase === 'exit' && hit && belongsTo(hit, exit));
 
-  renderer.domElement.style.cursor = actionable ? 'pointer' : 'default';
+  if (!hit) {
+    renderer.domElement.style.cursor = 'default';
+    return;
+  }
+
+  const coreEntry = getCoreEntryFromHit(hit);
+
+  const coreActionable =
+    coreEntry &&
+    !puzzleSolved &&
+    !carryingEntry &&
+    (coreEntry.state === 'world' || coreEntry.state === 'installed');
+
+  const generatorActionable =
+    !puzzleSolved &&
+    carryingEntry &&
+    belongsTo(hit, generator);
+
+  const exitActionable =
+    phase === 'exit' &&
+    belongsTo(hit, exit);
+
+  renderer.domElement.style.cursor =
+    coreActionable || generatorActionable || exitActionable
+      ? 'pointer'
+      : 'default';
+});
+
+renderer.domElement.addEventListener('pointerdown', (event) => {
+  if (moving || phase === 'done' || phase === 'finishing') return;
+
+  const hit = getInteractiveHit(event);
+  if (!hit) return;
+
+  const coreEntry = getCoreEntryFromHit(hit);
+
+  if (coreEntry && !puzzleSolved && !carryingEntry) {
+    if (coreEntry.state === 'world') {
+      pickWorldCore(coreEntry);
+      return;
+    }
+
+    if (coreEntry.state === 'installed') {
+      extractInstalledCore(coreEntry);
+      return;
+    }
+  }
+
+  if (
+    !puzzleSolved &&
+    carryingEntry &&
+    belongsTo(hit, generator)
+  ) {
+    insertCarriedCore();
+    return;
+  }
+
+  if (phase === 'exit' && belongsTo(hit, exit)) {
+    finishLevel();
+  }
 });
 
 const keyboardCodes = new Set([
@@ -771,6 +1077,7 @@ window.addEventListener('keydown', (event) => {
       manual.verticalVelocity = manual.jumpSpeed;
       manual.grounded = false;
     }
+
     return;
   }
 
@@ -787,29 +1094,11 @@ window.addEventListener('blur', () => {
   manualVelocity.set(0, 0, 0);
 });
 
-renderer.domElement.addEventListener('pointerdown', (event) => {
-  if (moving || phase === 'done' || phase === 'finishing') return;
-
-  const hit = getInteractiveHit(event);
-  if (!hit) return;
-
-  if (phase === 'core' && belongsTo(hit, core)) {
-    pickCore();
-    return;
-  }
-
-  if (phase === 'generator' && belongsTo(hit, generator)) {
-    powerGenerator();
-    return;
-  }
-
-  if (phase === 'exit' && belongsTo(hit, exit)) {
-    finishLevel();
-  }
-});
-
 function worldToScreen(object, element, yOffset = 0) {
-  if (!object.visible || element.classList.contains('world-tag--hidden')) {
+  if (
+    !object.visible ||
+    element.classList.contains('world-tag--hidden')
+  ) {
     element.style.opacity = '0';
     return;
   }
@@ -824,6 +1113,9 @@ function worldToScreen(object, element, yOffset = 0) {
   element.style.opacity = position.z > 1 ? '0' : '1';
 }
 
+updateGeneratorState({ allowSolve: false });
+updateCoreTags();
+
 const clock = new THREE.Clock();
 
 function render() {
@@ -835,30 +1127,53 @@ function render() {
   updateManualMovement(delta);
   animateRobot(robot, time, moving || manual.moving);
 
-  if (core.visible) {
-    core.userData.wire.rotation.x += .006;
-    core.userData.wire.rotation.y += .015;
-    core.userData.ball.material.emissiveIntensity = 3.8 + Math.sin(time * 5) * .6;
+  for (const entry of coreEntries) {
+    if (!entry.object.visible) continue;
+
+    entry.object.userData.wire.rotation.x += .006;
+    entry.object.userData.wire.rotation.y += .015;
+    entry.object.userData.halo.rotation.z += entry.config.value < 0 ? -.020 : .015;
+
+    const baseIntensity = entry.config.value < 0 ? 4.2 : 3.8;
+    entry.object.userData.ball.material.emissiveIntensity =
+      baseIntensity + Math.sin(time * 5) * .6;
+
+    entry.pedestal.userData.ring.rotation.z +=
+      entry.config.value < 0 ? -.005 : .004;
   }
 
-  pedestal.userData.ring.rotation.z += .004;
+  const generatorSpeed =
+    currentValue > level01.generator.targetValue
+      ? .045
+      : powered
+        ? .026
+        : .010;
 
-  generator.userData.halo.rotation.z += powered ? .026 : .008;
-  generator.userData.innerHalo.rotation.z -= powered ? .018 : .005;
+  generator.userData.halo.rotation.z += generatorSpeed;
+  generator.userData.innerHalo.rotation.z -= generatorSpeed * .7;
+
+  if (currentValue > level01.generator.targetValue) {
+    generator.userData.light.intensity = 6.2 + Math.sin(time * 11) * 1.8;
+  } else if (powered) {
+    generator.userData.light.intensity = 6.0 + Math.sin(time * 6) * 1.0;
+  } else {
+    generator.userData.light.intensity = 2.4 + Math.sin(time * 4) * .35;
+  }
 
   if (powered) {
-    generator.userData.slot.material.emissiveIntensity = 5.0 + Math.sin(time * 7) * .85;
-    generator.userData.light.intensity = 6.0 + Math.sin(time * 6) * 1.0;
-    cable.userData.glow.material.emissiveIntensity = 2.7 + Math.sin(time * 8) * .55;
+    cable.userData.glow.material.emissiveIntensity =
+      2.7 + Math.sin(time * 8) * .55;
 
     if (energyLoopStart && !cable.userData.pulse.visible) {
       const loop = ((performance.now() - energyLoopStart) % 2200) / 2200;
       const point = cable.userData.curve.getPoint(loop);
+
       cable.userData.pulse.position.copy(point);
       cable.userData.pulseLight.position.copy(point);
       cable.userData.pulse.visible = true;
       cable.userData.pulseLight.visible = true;
-      cable.userData.pulse.material.opacity = .50 + Math.sin(time * 10) * .20;
+      cable.userData.pulse.material.opacity =
+        .50 + Math.sin(time * 10) * .20;
     }
   }
 
@@ -868,7 +1183,14 @@ function render() {
     exit.position.y = .10 + Math.sin(time * 2.6) * .03;
   }
 
-  worldToScreen(core, coreTag, .88);
+  for (const entry of coreEntries) {
+    worldToScreen(
+      entry.object,
+      entry.tag,
+      entry.state === 'installed' ? .72 : .90,
+    );
+  }
+
   worldToScreen(generator, generatorTag, 1.95);
   worldToScreen(door, doorTag, 3.10);
 
