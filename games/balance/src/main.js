@@ -15,6 +15,9 @@ import {
   createEnvironmentMaterials,
 } from './environment/TextureFactory.js';
 import {
+  addExternalEnvironmentAssets,
+} from './environment/ExternalAssets.js';
+import {
   createEnergyCore,
   createCorePedestal,
   createGenerator,
@@ -279,6 +282,12 @@ scene.add(generator);
 const door = createDoor(materials);
 door.position.set(3.45, 0, -1.20);
 scene.add(door);
+
+addExternalEnvironmentAssets(scene, materials, {
+  doorPosition: door.position.clone(),
+}).catch((error) => {
+  console.warn('VIDLIK: external environment pass failed', error);
+});
 
 const cable = createEnergyCable(materials);
 scene.add(cable);
