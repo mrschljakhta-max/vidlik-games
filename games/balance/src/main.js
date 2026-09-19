@@ -51,6 +51,7 @@ app.innerHTML = `
 
   <div class="panel controls-help">
     <span><kbd>WASD</kbd> / <kbd>←↑↓→</kbd> рух</span>
+    <span><kbd>SHIFT</kbd> прискорення</span>
     <span><kbd>SPACE</kbd> стрибок</span>
     <span><kbd>ENTER</kbd> взаємодія</span>
   </div>
@@ -323,12 +324,15 @@ const desiredMove = new THREE.Vector3();
 
 const manual = {
   baseY: .90,
-  speed: 2.75,
+  walkSpeed: 2.75,
+  runSpeed: 5.05,
   jumpSpeed: 4.7,
   gravity: 10.5,
   verticalVelocity: 0,
   grounded: true,
   moving: false,
+  boosting: false,
+  speedRatio: 0,
 };
 
 const islandBounds = {
@@ -440,6 +444,8 @@ function isBlockedPosition(position) {
 function updateManualMovement(delta) {
   if (!canManualControl()) {
     manual.moving = false;
+    manual.boosting = false;
+    manual.speedRatio = 0;
     return;
   }
 
@@ -450,6 +456,13 @@ function updateManualMovement(delta) {
   const sideInput =
     (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) -
     (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0);
+
+  const hasMovementInput = forwardInput !== 0 || sideInput !== 0;
+  const boostHeld = keys.has('ShiftLeft') || keys.has('ShiftRight');
+  const wantsBoost = boostHeld && hasMovementInput;
+  const targetSpeed = wantsBoost
+    ? manual.runSpeed
+    : manual.walkSpeed;
 
   camera.getWorldDirection(cameraForward);
   cameraForward.y = 0;
@@ -466,19 +479,21 @@ function updateManualMovement(delta) {
     desiredMove.normalize();
   }
 
-  desiredMove.multiplyScalar(manual.speed);
+  desiredMove.multiplyScalar(targetSpeed);
+
+  const acceleration = wantsBoost ? 8.5 : 12;
 
   manualVelocity.x = THREE.MathUtils.damp(
     manualVelocity.x,
     desiredMove.x,
-    12,
+    acceleration,
     delta,
   );
 
   manualVelocity.z = THREE.MathUtils.damp(
     manualVelocity.z,
     desiredMove.z,
-    12,
+    acceleration,
     delta,
   );
 
@@ -500,15 +515,27 @@ function updateManualMovement(delta) {
     manualVelocity.z = 0;
   }
 
-  const horizontalSpeed = Math.hypot(manualVelocity.x, manualVelocity.z);
+  const horizontalSpeed = Math.hypot(
+    manualVelocity.x,
+    manualVelocity.z,
+  );
 
   if (horizontalSpeed > .08) {
     const lookTarget = robot.position.clone().add(
-      new THREE.Vector3(manualVelocity.x, 0, manualVelocity.z),
+      new THREE.Vector3(
+        manualVelocity.x,
+        0,
+        manualVelocity.z,
+      ),
     );
 
-    const targetQuaternion = getLookQuaternion(robot.position, lookTarget);
-    const turnAmount = 1 - Math.exp(-11 * delta);
+    const targetQuaternion = getLookQuaternion(
+      robot.position,
+      lookTarget,
+    );
+
+    const turnRate = wantsBoost ? 14 : 11;
+    const turnAmount = 1 - Math.exp(-turnRate * delta);
     robot.quaternion.slerp(targetQuaternion, turnAmount);
   }
 
@@ -526,6 +553,15 @@ function updateManualMovement(delta) {
   }
 
   manual.moving = horizontalSpeed > .08 || !manual.grounded;
+  manual.boosting =
+    wantsBoost &&
+    horizontalSpeed > manual.walkSpeed * .78;
+
+  manual.speedRatio = THREE.MathUtils.clamp(
+    horizontalSpeed / manual.runSpeed,
+    0,
+    1,
+  );
 
   if (
     phase === 'exit' &&
@@ -1187,6 +1223,8 @@ const keyboardCodes = new Set([
   'ArrowDown',
   'ArrowLeft',
   'ArrowRight',
+  'ShiftLeft',
+  'ShiftRight',
   'Space',
   'Enter',
   'NumpadEnter',
@@ -1210,6 +1248,11 @@ window.addEventListener('keydown', (event) => {
       manual.grounded = false;
     }
 
+    return;
+  }
+
+  if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') {
+    keys.add(event.code);
     return;
   }
 
@@ -1261,7 +1304,11 @@ function render() {
   const time = clock.elapsedTime;
 
   updateManualMovement(delta);
-  animateRobot(robot, time, moving || manual.moving);
+  animateRobot(robot, time, {
+    moving: moving || manual.moving,
+    boosting: !moving && manual.boosting,
+    speedRatio: moving ? .58 : manual.speedRatio,
+  });
 
   for (const entry of coreEntries) {
     if (!entry.object.visible) continue;
