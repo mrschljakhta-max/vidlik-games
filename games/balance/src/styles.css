@@ -899,3 +899,14 @@ select {
     min-width: 76px;
   }
 }
+
+
+/* World indicators disabled ------------------------------------------------
+   BALANCE now relies on the physical puzzle objects, mission panel and
+   contextual ENTER prompt. Floating energy/generator/door plates are hidden. */
+.world-tag,
+.world-tag--core,
+.world-tag--generator,
+.world-tag--door {
+  display: none !important;
+}
