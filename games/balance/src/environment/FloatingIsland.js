@@ -66,16 +66,70 @@ function createIslandShape() {
   return shape;
 }
 
+function createGrassTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 512;
+
+  const ctx = canvas.getContext('2d');
+  const image = ctx.createImageData(canvas.width, canvas.height);
+
+  const rand = seededRandom(143);
+
+  for (let y = 0; y < canvas.height; y += 1) {
+    for (let x = 0; x < canvas.width; x += 1) {
+      const i = (y * canvas.width + x) * 4;
+
+      const broad =
+        Math.sin(x * .018) * 4 +
+        Math.sin(y * .021) * 3 +
+        Math.sin((x + y) * .010) * 2;
+
+      const noise = (rand() - .5) * 8;
+      const variation = broad + noise;
+
+      image.data[i] = Math.max(0, Math.min(255, 119 + variation));
+      image.data[i + 1] = Math.max(0, Math.min(255, 162 + variation * 1.15));
+      image.data[i + 2] = Math.max(0, Math.min(255, 86 + variation * .75));
+      image.data[i + 3] = 255;
+    }
+  }
+
+  ctx.putImageData(image, 0, 0);
+
+  // Very soft broad tinting. No tiles, squares or visible repeating cells.
+  const gradients = [
+    [130, 125, 120, 'rgba(169,188,105,.10)'],
+    [390, 155, 150, 'rgba(94,132,69,.10)'],
+    [275, 385, 135, 'rgba(156,174,91,.08)'],
+  ];
+
+  gradients.forEach(([x, y, radius, color]) => {
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+    gradient.addColorStop(0, color);
+    gradient.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  });
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.anisotropy = 4;
+  texture.needsUpdate = true;
+
+  return texture;
+}
+
 function createSmoothGrassMaterial(materials) {
   const grass = materials.grass.clone();
 
-  // Critical change: remove the repeating procedural map that caused
-  // the visible "checkerboard / Minecraft" pattern.
-  grass.map = null;
+  grass.map = createGrassTexture();
   grass.bumpMap = null;
   grass.roughnessMap = null;
-  grass.color.setHex(0x789f5f);
-  grass.roughness = .94;
+  grass.color.setHex(0xffffff);
+  grass.roughness = .92;
   grass.metalness = 0;
   grass.needsUpdate = true;
 
@@ -111,28 +165,18 @@ function createIslandBody(materials) {
 }
 
 function createGrassCap(materials) {
-  const shape = createIslandShape();
-
-  const geometry = new THREE.ExtrudeGeometry(shape, {
-    depth: .055,
-    bevelEnabled: true,
-    bevelSegments: 3,
-    bevelSize: .07,
-    bevelThickness: .035,
-    curveSegments: 12,
-    steps: 1,
-  });
-
+  const geometry = new THREE.ShapeGeometry(createIslandShape(), 18);
   geometry.rotateX(-Math.PI / 2);
-  geometry.translate(0, .015, 0);
 
   const cap = new THREE.Mesh(
     geometry,
     createSmoothGrassMaterial(materials),
   );
 
+  // Lift the grass very slightly above the earth body to avoid z-fighting
+  // and guarantee that the top reads as grass.
+  cap.position.y = .105;
   cap.name = 'IslandGrassCap';
-  cap.castShadow = true;
   cap.receiveShadow = true;
 
   return cap;
@@ -163,36 +207,35 @@ function makeSoftPatchTexture(inner, middle, alpha = .42) {
 }
 
 function createSurfaceVariation(group) {
+  // Only a few very soft earth/moss tints. They should never read as
+  // separate polygons or pale plates.
   const patches = [
-    [-2.50, -.03, 1.38, 1.80, 1.10, .20, 'moss'],
-    [-1.20, -.03, -1.58, 1.55, 1.00, -.35, 'earth'],
-    [.15, -.03, 1.76, 1.35, .88, .15, 'moss'],
-    [1.64, -.03, -1.55, 1.45, .92, -.18, 'earth'],
-    [2.64, -.03, .92, 1.30, .82, .38, 'moss'],
-    [2.38, -.03, -1.82, 1.05, .70, -.40, 'earth'],
+    [-2.62, 1.42, 1.18, .76, .16, 'moss'],
+    [-1.22, -1.62, .92, .58, -.20, 'earth'],
+    [2.48, -1.28, .82, .52, .26, 'earth'],
   ];
 
   const textures = {
     moss: makeSoftPatchTexture(
-      'rgba(68,100,43,1)',
-      'rgba(96,125,58,.68)',
-      .30,
+      'rgba(77,111,54,1)',
+      'rgba(108,139,72,.46)',
+      .10,
     ),
     earth: makeSoftPatchTexture(
-      'rgba(104,84,58,1)',
-      'rgba(124,102,69,.62)',
-      .26,
+      'rgba(112,88,58,1)',
+      'rgba(133,106,70,.42)',
+      .09,
     ),
   };
 
-  patches.forEach(([x, y, z, sx, sz, rotation, type]) => {
+  patches.forEach(([x, z, sx, sz, rotation, type]) => {
     const material = new THREE.MeshBasicMaterial({
       map: textures[type],
       transparent: true,
       opacity: 1,
       depthWrite: false,
       polygonOffset: true,
-      polygonOffsetFactor: -1,
+      polygonOffsetFactor: -2,
       side: THREE.DoubleSide,
     });
 
@@ -203,8 +246,8 @@ function createSurfaceVariation(group) {
 
     patch.rotation.x = -Math.PI / 2;
     patch.rotation.z = rotation;
-    patch.position.set(x, .082 + y, z);
-    patch.renderOrder = 2;
+    patch.position.set(x, .112, z);
+    patch.renderOrder = 3;
 
     group.add(patch);
   });
