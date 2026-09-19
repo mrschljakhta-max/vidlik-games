@@ -451,46 +451,83 @@ function createLocalCliffMass(group, materials, rand) {
 }
 
 function createStonePath(group, material, rand) {
-  const pathPoints = [
-    [-3.0, .20],
-    [-2.35, .18],
-    [-1.68, .15],
-    [-1.00, .18],
-    [-.32, .15],
-    [.38, .16],
-    [1.05, .15],
-    [1.72, .08],
-    [2.30, -.22],
-    [2.75, -.70],
-    [3.05, -1.16],
+  // Organic stepping-stone trail from the robot start area toward
+  // the generator and then the gate. The route is intentionally curved
+  // and irregular so it reads as a path, not a tiled grid.
+  const dirtMaterial = new THREE.MeshBasicMaterial({
+    color: 0x5f513f,
+    transparent: true,
+    opacity: .28,
+    depthWrite: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -2,
+  });
+
+  const pathMaterial = material.clone();
+  pathMaterial.color.setHex(0xb5aa96);
+  pathMaterial.roughness = .96;
+  pathMaterial.metalness = 0;
+
+  const stones = [
+    [-2.72, .16, .35, .54, .38, -.10],
+    [-2.20, .16, .28, .58, .40,  .10],
+    [-1.64, .15, .22, .56, .38, -.06],
+    [-1.10, .14, .18, .60, .42,  .08],
+    [-.52,  .14, .20, .58, .40, -.04],
+    [.05,   .14, .22, .60, .42,  .06],
+    [.62,   .14, .28, .58, .40, -.06],
+    [1.14,  .14, .38, .56, .40,  .08],
+    [1.58,  .14, .58, .54, .38, -.12],
+    [1.98,  .14, .84, .52, .36, -.22],
+    [2.34,  .14, 1.10, .50, .34, -.32],
+    [2.64,  .14, 1.38, .48, .32, -.38],
   ];
 
-  pathPoints.forEach(([x, z], index) => {
-    const width = index > 7 ? .58 : .66;
-    const depth = index > 7 ? .52 : .64;
+  const trailShape = new THREE.Shape();
+  trailShape.moveTo(-2.92, .28);
+  trailShape.bezierCurveTo(-1.85, .08, -.65, .08, .42, .20);
+  trailShape.bezierCurveTo(1.42, .32, 2.18, .72, 2.78, 1.48);
+  trailShape.lineTo(2.54, 1.66);
+  trailShape.bezierCurveTo(2.02, .98, 1.34, .58, .42, .46);
+  trailShape.bezierCurveTo(-.66, .32, -1.86, .34, -2.90, .48);
+  trailShape.closePath();
 
-    const tile = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        width * (.90 + rand() * .18),
-        .09 + rand() * .025,
-        depth * (.90 + rand() * .18),
+  const trail = new THREE.Mesh(
+    new THREE.ShapeGeometry(trailShape, 24),
+    dirtMaterial,
+  );
+  trail.rotation.x = -Math.PI / 2;
+  trail.position.y = .108;
+  trail.renderOrder = 1;
+  group.add(trail);
+
+  stones.forEach(([x, y, z, sx, sz, rotation], index) => {
+    const stone = new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        .50,
+        .54,
+        .08,
+        7 + (index % 3),
       ),
-      material,
+      pathMaterial,
     );
 
-    tile.position.set(
-      x,
-      .105 + rand() * .012,
-      z + (rand() - .5) * .05,
+    stone.scale.set(
+      sx * (.92 + rand() * .14),
+      1,
+      sz * (.92 + rand() * .14),
     );
 
-    tile.rotation.y =
-      (index > 7 ? -.42 : 0) +
-      (rand() - .5) * .07;
+    stone.position.set(
+      x + (rand() - .5) * .05,
+      y + rand() * .012,
+      z + (rand() - .5) * .04,
+    );
 
-    tile.castShadow = true;
-    tile.receiveShadow = true;
-    group.add(tile);
+    stone.rotation.y = rotation + (rand() - .5) * .08;
+    stone.castShadow = true;
+    stone.receiveShadow = true;
+    group.add(stone);
   });
 }
 
