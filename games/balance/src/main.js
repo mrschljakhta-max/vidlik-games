@@ -52,6 +52,7 @@ app.innerHTML = `
   <div class="panel controls-help">
     <span><kbd>WASD</kbd> / <kbd>←↑↓→</kbd> рух</span>
     <span><kbd>SPACE</kbd> стрибок</span>
+    <span><kbd>ENTER</kbd> взаємодія</span>
   </div>
 
   <div id="scene" class="scene"></div>
@@ -68,6 +69,11 @@ app.innerHTML = `
   </section>
 
   <button id="restart" class="restart" type="button">↻ Заново</button>
+
+  <div id="interaction-prompt" class="panel interaction-prompt">
+    <kbd>ENTER</kbd>
+    <span id="interaction-label">Взаємодія</span>
+  </div>
 
   <div id="complete" class="panel complete">
     <span class="complete__eyebrow">BALANCE</span>
@@ -95,6 +101,8 @@ const title = document.querySelector('#mission-title');
 const text = document.querySelector('#mission-text');
 const equationTrail = document.querySelector('#equation-trail');
 const complete = document.querySelector('#complete');
+const interactionPrompt = document.querySelector('#interaction-prompt');
+const interactionLabel = document.querySelector('#interaction-label');
 const generatorTag = document.querySelector('#generator-tag');
 const generatorValue = document.querySelector('#generator-value');
 const generatorCaption = document.querySelector('#generator-caption');
@@ -305,6 +313,7 @@ let energyLoopStart = 0;
 let carryingEntry = null;
 let currentValue = level01.generator.startValue;
 let installedOrder = [];
+let flightToken = 0;
 
 const keys = new Set();
 const manualVelocity = new THREE.Vector3();
@@ -360,7 +369,20 @@ function getLookQuaternion(from, to) {
 }
 
 function canManualControl() {
-  return !moving && phase !== 'finishing' && phase !== 'done';
+  return !moving && phase !== 'done';
+}
+
+function cancelAutopilot() {
+  if (!moving) return;
+
+  flightToken += 1;
+  moving = false;
+  manualVelocity.set(0, 0, 0);
+
+  if (phase === 'exit') {
+    title.textContent = 'Пройди через двері';
+    text.textContent = 'Ручне керування відновлено. Проведи робота до світного виходу.';
+  }
 }
 
 function isBlockedPosition(position) {
@@ -506,6 +528,7 @@ function flyTo(end, duration = 700, done) {
   if (moving) return;
 
   moving = true;
+  const token = ++flightToken;
 
   const start = robot.position.clone();
   const startQuaternion = robot.quaternion.clone();
@@ -513,6 +536,8 @@ function flyTo(end, duration = 700, done) {
   const startedAt = performance.now();
 
   const tick = (now) => {
+    if (token !== flightToken) return;
+
     const u = Math.min(1, (now - startedAt) / duration);
     const eased = 1 - Math.pow(1 - u, 3);
 
@@ -945,9 +970,8 @@ function finishLevel() {
     return;
   }
 
-  phase = 'finishing';
   title.textContent = 'До виходу';
-  text.textContent = 'Робот проходить через активований портал.';
+  text.textContent = 'Автопілот активний. Натисни WASD або стрілку, щоб перехопити керування.';
 
   flyRoute(
     [
@@ -985,8 +1009,92 @@ function getCoreEntryFromHit(hit) {
   return coreEntries.find((entry) => belongsTo(hit, entry.object)) ?? null;
 }
 
+function getContextInteraction() {
+  if (moving || phase === 'done') return null;
+
+  if (
+    phase === 'exit' &&
+    distanceXZ(robot.position, path.exit) <= 1.05
+  ) {
+    return {
+      label: 'Завершити рівень',
+      action: completeLevel,
+    };
+  }
+
+  if (
+    carryingEntry &&
+    !puzzleSolved &&
+    distanceXZ(robot.position, path.generatorApproach) <= 1.15
+  ) {
+    return {
+      label: `Вставити ${carryingEntry.config.label} у генератор`,
+      action: insertCarriedCore,
+    };
+  }
+
+  if (!carryingEntry && !puzzleSolved) {
+    const installedEntries = [...coreEntries]
+      .filter((entry) => entry.state === 'installed')
+      .reverse();
+
+    if (
+      installedEntries.length &&
+      distanceXZ(robot.position, path.generatorApproach) <= 1.20
+    ) {
+      const entry = installedEntries[0];
+
+      return {
+        label: `Витягти ${entry.config.label} з генератора`,
+        action: () => extractInstalledCore(entry),
+      };
+    }
+
+    let nearest = null;
+    let nearestDistance = Infinity;
+
+    for (const entry of coreEntries) {
+      if (entry.state !== 'world') continue;
+
+      const approach = new THREE.Vector3(...entry.config.approach);
+      const distance = distanceXZ(robot.position, approach);
+
+      if (distance < nearestDistance) {
+        nearest = entry;
+        nearestDistance = distance;
+      }
+    }
+
+    if (nearest && nearestDistance <= 1.15) {
+      return {
+        label: `Взяти ядро ${nearest.config.label}`,
+        action: () => pickWorldCore(nearest),
+      };
+    }
+  }
+
+  return null;
+}
+
+function performContextInteraction() {
+  const interaction = getContextInteraction();
+  interaction?.action();
+}
+
+function updateInteractionPrompt() {
+  const interaction = getContextInteraction();
+
+  if (!interaction) {
+    interactionPrompt.classList.remove('show');
+    return;
+  }
+
+  interactionLabel.textContent = interaction.label;
+  interactionPrompt.classList.add('show');
+}
+
 renderer.domElement.addEventListener('pointermove', (event) => {
-  if (moving || phase === 'done' || phase === 'finishing') {
+  if (moving || phase === 'done') {
     renderer.domElement.style.cursor = 'default';
     return;
   }
@@ -1022,7 +1130,7 @@ renderer.domElement.addEventListener('pointermove', (event) => {
 });
 
 renderer.domElement.addEventListener('pointerdown', (event) => {
-  if (moving || phase === 'done' || phase === 'finishing') return;
+  if (moving || phase === 'done') return;
 
   const hit = getInteractiveHit(event);
   if (!hit) return;
@@ -1065,12 +1173,21 @@ const keyboardCodes = new Set([
   'ArrowLeft',
   'ArrowRight',
   'Space',
+  'Enter',
+  'NumpadEnter',
 ]);
 
 window.addEventListener('keydown', (event) => {
   if (!keyboardCodes.has(event.code)) return;
 
   event.preventDefault();
+
+  if (event.code === 'Enter' || event.code === 'NumpadEnter') {
+    if (!event.repeat) {
+      performContextInteraction();
+    }
+    return;
+  }
 
   if (event.code === 'Space') {
     if (canManualControl() && manual.grounded) {
@@ -1079,6 +1196,10 @@ window.addEventListener('keydown', (event) => {
     }
 
     return;
+  }
+
+  if (moving) {
+    cancelAutopilot();
   }
 
   keys.add(event.code);
@@ -1193,6 +1314,7 @@ function render() {
 
   worldToScreen(generator, generatorTag, 1.95);
   worldToScreen(door, doorTag, 3.10);
+  updateInteractionPrompt();
 
   renderer.render(scene, camera);
 }
