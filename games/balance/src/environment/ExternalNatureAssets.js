@@ -31,8 +31,9 @@ function tuneMaterial(source) {
   const material = source.clone();
 
   if ('metalness' in material) material.metalness = 0;
+
   if ('roughness' in material) {
-    material.roughness = Math.max(material.roughness ?? .8, .82);
+    material.roughness = Math.max(material.roughness ?? .8, .84);
   }
 
   if (material.transparent || material.alphaMap) {
@@ -99,10 +100,10 @@ function recolorRock(root, materials, dark = false) {
     dark ? materials.rockDark : materials.rock
   ).clone();
 
-  replacement.color.setHex(dark ? 0x746b60 : 0x9f9484);
+  replacement.color.setHex(dark ? 0x6f665b : 0x978b7b);
   replacement.roughness = .97;
   replacement.metalness = 0;
-  replacement.bumpScale = dark ? .12 : .09;
+  replacement.bumpScale = dark ? .11 : .085;
 
   root.traverse((child) => {
     if (!child.isMesh) return;
@@ -115,23 +116,26 @@ function recolorRock(root, materials, dark = false) {
   return root;
 }
 
-function softenPlant(root, type = 'green') {
+function recolorFoliage(root, mode = 'green') {
   root.traverse((child) => {
     if (!child.isMesh || !child.material) return;
 
     const material = child.material.clone();
 
     if (material.color) {
-      if (type === 'green') {
-        material.color.multiply(new THREE.Color(0x9eb88a));
-      } else if (type === 'flowers') {
-        material.color.multiply(new THREE.Color(0xd8d2ad));
+      if (mode === 'green') {
+        // Force all foliage into one coherent sage/olive palette.
+        material.color.setHex(0x6f8f55);
+      } else if (mode === 'light') {
+        // Replaces the loud red flower accents with muted warm cream.
+        material.color.setHex(0xd8d0a8);
       }
     }
 
-    material.roughness = Math.max(material.roughness ?? .8, .88);
+    material.roughness = Math.max(material.roughness ?? .8, .90);
     material.metalness = 0;
     material.needsUpdate = true;
+
     child.material = material;
   });
 
@@ -172,23 +176,22 @@ function place(
 
 function addCliffSilhouette(target, rocks, materials) {
   const rim = [
-    [-3.48, -.44, 1.86, 1.48, .10, -.12, false],
-    [-2.62, -.50, 2.23, 1.60, .55, .10, false],
-    [-1.45, -.48, 2.36, 1.72, 1.15, -.08, true],
-    [-.16, -.50, 2.42, 1.56, 1.88, .10, false],
-    [1.10, -.48, 2.35, 1.66, 2.55, -.08, false],
-    [2.38, -.46, 2.06, 1.58, 3.15, .12, true],
-    [3.34, -.44, 1.35, 1.50, 3.72, -.10, false],
-
-    [3.48, -.46, .25, 1.58, 4.20, .10, true],
-    [3.36, -.44, -.94, 1.50, 4.72, -.12, false],
-    [2.86, -.48, -1.92, 1.62, 5.20, .10, false],
-    [1.72, -.50, -2.34, 1.68, 5.74, -.10, true],
-    [.36, -.48, -2.42, 1.60, 6.20, .12, false],
-    [-1.02, -.50, -2.38, 1.72, .44, -.10, false],
-    [-2.28, -.48, -2.20, 1.56, 1.00, .10, true],
-    [-3.20, -.44, -1.62, 1.50, 1.62, -.10, false],
-    [-3.52, -.46, -.48, 1.58, 2.12, .10, true],
+    [-3.48, -.50, 1.86, 1.42, .10, -.12, false],
+    [-2.62, -.54, 2.23, 1.52, .55, .10, false],
+    [-1.45, -.54, 2.36, 1.64, 1.15, -.08, true],
+    [-.16, -.54, 2.42, 1.48, 1.88, .10, false],
+    [1.10, -.52, 2.35, 1.58, 2.55, -.08, false],
+    [2.38, -.50, 2.06, 1.50, 3.15, .12, true],
+    [3.34, -.48, 1.35, 1.42, 3.72, -.10, false],
+    [3.48, -.50, .25, 1.50, 4.20, .10, true],
+    [3.36, -.48, -.94, 1.42, 4.72, -.12, false],
+    [2.86, -.52, -1.92, 1.54, 5.20, .10, false],
+    [1.72, -.54, -2.34, 1.60, 5.74, -.10, true],
+    [.36, -.52, -2.42, 1.52, 6.20, .12, false],
+    [-1.02, -.54, -2.38, 1.64, .44, -.10, false],
+    [-2.28, -.52, -2.20, 1.48, 1.00, .10, true],
+    [-3.20, -.48, -1.62, 1.42, 1.62, -.10, false],
+    [-3.52, -.50, -.48, 1.50, 2.12, .10, true],
   ];
 
   rim.forEach(([x, y, z, size, yaw, roll, dark], index) => {
@@ -200,20 +203,20 @@ function addCliffSilhouette(target, rocks, materials) {
         yaw,
         roll,
       ],
-      scale: [1.04, 1.10, .96],
+      scale: [1.02, 1.08, .96],
       transform: (object) => recolorRock(object, materials, dark),
     });
   });
 
   const underside = [
-    [-2.75, -1.15, 1.22, 2.10, .45, true],
-    [-1.24, -1.42, 1.02, 2.36, 1.22, false],
-    [.46, -1.48, 1.02, 2.44, 2.08, true],
-    [2.14, -1.24, .92, 2.20, 2.82, false],
-    [-2.50, -1.18, -.82, 2.12, 1.64, false],
-    [-.82, -1.48, -.88, 2.48, 2.42, true],
-    [.96, -1.42, -.82, 2.38, .82, false],
-    [2.58, -1.16, -.78, 2.08, 2.30, true],
+    [-2.75, -1.18, 1.22, 2.02, .45, true],
+    [-1.24, -1.43, 1.02, 2.25, 1.22, false],
+    [.46, -1.48, 1.02, 2.32, 2.08, true],
+    [2.14, -1.25, .92, 2.10, 2.82, false],
+    [-2.50, -1.20, -.82, 2.04, 1.64, false],
+    [-.82, -1.48, -.88, 2.36, 2.42, true],
+    [.96, -1.43, -.82, 2.28, .82, false],
+    [2.58, -1.18, -.78, 2.00, 2.30, true],
   ];
 
   underside.forEach(([x, y, z, size, yaw, dark], index) => {
@@ -225,7 +228,7 @@ function addCliffSilhouette(target, rocks, materials) {
         yaw,
         (index % 3 - 1) * .10,
       ],
-      scale: [1.02, 1.26, .94],
+      scale: [1.00, 1.22, .94],
       transform: (object) => recolorRock(object, materials, dark),
     });
   });
@@ -233,13 +236,11 @@ function addCliffSilhouette(target, rocks, materials) {
 
 function addSurfaceRocks(target, rocks, materials) {
   const placements = [
-    [-3.00, .02, 1.58, .52, .3, false],
-    [-2.48, .02, -1.88, .42, 1.4, true],
-    [-1.12, .02, 2.00, .40, 2.1, false],
-    [.72, .02, 2.04, .36, .8, false],
-    [2.38, .02, 1.62, .46, 2.8, true],
-    [2.68, .02, -1.72, .42, 1.9, false],
-    [-3.02, .02, -.84, .34, 2.5, false],
+    [-3.00, .02, 1.58, .46, .3, false],
+    [-2.48, .02, -1.88, .38, 1.4, true],
+    [-1.12, .02, 2.00, .36, 2.1, false],
+    [2.38, .02, 1.62, .40, 2.8, true],
+    [2.68, .02, -1.72, .38, 1.9, false],
   ];
 
   placements.forEach(([x, y, z, size, yaw, dark], index) => {
@@ -251,7 +252,7 @@ function addSurfaceRocks(target, rocks, materials) {
         yaw,
         (index % 2 ? 1 : -1) * .04,
       ],
-      scale: [1.12, .76, 1],
+      scale: [1.10, .72, .96],
       transform: (object) => recolorRock(object, materials, dark),
     });
   });
@@ -259,11 +260,11 @@ function addSurfaceRocks(target, rocks, materials) {
 
 function addBushes(target, common, flowers) {
   const greenPlacements = [
-    [-3.05, .03, 1.24, .58, .4],
-    [-2.38, .03, 1.94, .50, 1.3],
-    [-1.20, .03, -1.94, .50, 2.1],
-    [1.88, .03, 1.82, .56, 2.8],
-    [2.52, .03, -1.70, .52, .2],
+    [-3.02, .10, 1.18, .46, .4],
+    [-2.28, .10, 1.88, .42, 1.3],
+    [-1.22, .10, -1.86, .42, 2.1],
+    [1.92, .10, 1.76, .46, 2.8],
+    [2.48, .10, -1.64, .44, .2],
   ];
 
   greenPlacements.forEach(([x, y, z, size, yaw]) => {
@@ -271,28 +272,28 @@ function addBushes(target, common, flowers) {
       position: [x, y, z],
       size,
       rotation: [0, yaw, 0],
-      transform: (object) => softenPlant(object, 'green'),
+      transform: (object) => recolorFoliage(object, 'green'),
     });
   });
 
+  // One restrained warm accent instead of several loud red bushes.
   place(target, flowers, {
-    position: [.86, .03, -1.88],
-    size: .36,
+    position: [.82, .10, -1.84],
+    size: .28,
     rotation: [0, .8, 0],
-    transform: (object) => softenPlant(object, 'flowers'),
+    transform: (object) => recolorFoliage(object, 'light'),
   });
 }
 
 function addGrass(target, tall, wispy) {
   const placements = [
-    [-3.18, .03, 1.88, .22, .2, 0],
-    [-2.32, .03, -1.92, .18, 1.8, 1],
-    [-.42, .03, 2.00, .20, 1.4, 0],
-    [1.18, .03, 1.94, .18, .9, 1],
-    [2.28, .03, -1.82, .20, 2.1, 0],
-    [3.02, .03, .62, .16, 1.6, 1],
-    [-3.12, .03, -.58, .16, .8, 0],
-    [.72, .03, 1.48, .15, 2.4, 1],
+    [-3.10, .10, 1.84, .18, .2, 0],
+    [-2.28, .10, -1.88, .16, 1.8, 1],
+    [-.42, .10, 1.96, .17, 1.4, 0],
+    [1.18, .10, 1.90, .16, .9, 1],
+    [2.26, .10, -1.78, .17, 2.1, 0],
+    [2.98, .10, .58, .14, 1.6, 1],
+    [-3.06, .10, -.54, .14, .8, 0],
   ];
 
   placements.forEach(([x, y, z, size, yaw, variant]) => {
@@ -300,27 +301,25 @@ function addGrass(target, tall, wispy) {
       position: [x, y, z],
       size,
       rotation: [0, yaw, 0],
-      scale: [.90, 1.08, .90],
-      transform: (object) => softenPlant(object, 'green'),
+      scale: [.90, 1.05, .90],
+      transform: (object) => recolorFoliage(object, 'green'),
     });
   });
 }
 
-function addAccentPlants(target, plant, flowers) {
+function addAccentPlants(target, plant) {
   const placements = [
-    [-2.78, .03, 1.82, .34, .5, false],
-    [-1.92, .03, -1.72, .30, 2.0, true],
-    [.15, .03, 1.88, .34, 1.2, false],
-    [2.20, .03, 1.42, .31, 2.5, true],
+    [-2.70, .10, 1.76, .26, .5],
+    [.10, .10, 1.82, .28, 1.2],
+    [2.16, .10, 1.34, .25, 2.5],
   ];
 
-  placements.forEach(([x, y, z, size, yaw, useFlowers]) => {
-    place(target, useFlowers ? flowers : plant, {
+  placements.forEach(([x, y, z, size, yaw]) => {
+    place(target, plant, {
       position: [x, y, z],
       size,
       rotation: [0, yaw, 0],
-      transform: (object) =>
-        softenPlant(object, useFlowers ? 'flowers' : 'green'),
+      transform: (object) => recolorFoliage(object, 'green'),
     });
   });
 }
@@ -341,7 +340,6 @@ function addCredits(root) {
         'Grass_Common_Tall',
         'Grass_Wispy_Short',
         'Plant_1_Big',
-        'Flower_3_Group',
       ],
     },
   ];
@@ -365,7 +363,6 @@ export async function addExternalNatureAssets(
     'Grass_Common_Tall',
     'Grass_Wispy_Short',
     'Plant_1_Big',
-    'Flower_3_Group',
   ];
 
   const results = await Promise.allSettled(
@@ -412,10 +409,9 @@ export async function addExternalNatureAssets(
   }
 
   const plant = loaded.get('Plant_1_Big');
-  const flowerGroup = loaded.get('Flower_3_Group');
 
-  if (plant && flowerGroup) {
-    addAccentPlants(root, plant, flowerGroup);
+  if (plant) {
+    addAccentPlants(root, plant);
   }
 
   return root;

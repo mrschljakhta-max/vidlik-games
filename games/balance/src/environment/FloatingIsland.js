@@ -41,250 +41,14 @@ function createLantern(materials, scale = 1) {
   cap.position.y = .65 * scale;
   cap.rotation.y = Math.PI / 4;
 
-  const light = new THREE.PointLight(0xffb84d, 3.8 * scale, 3.1 * scale, 2);
+  const light = new THREE.PointLight(0xffb84d, 3.2 * scale, 2.8 * scale, 2);
   light.position.y = .50 * scale;
 
   group.add(post, frame, glass, cap, light);
   return group;
 }
 
-function createGrassTuft(rand, material, scale = 1) {
-  const group = new THREE.Group();
-
-  const blades = 5 + Math.floor(rand() * 5);
-
-  for (let i = 0; i < blades; i += 1) {
-    const height = (.20 + rand() * .22) * scale;
-
-    const blade = new THREE.Mesh(
-      new THREE.ConeGeometry(.025 * scale, height, 5),
-      material,
-    );
-
-    blade.position.set(
-      (rand() - .5) * .28 * scale,
-      height * .5,
-      (rand() - .5) * .28 * scale,
-    );
-
-    blade.rotation.z = (rand() - .5) * .42;
-    blade.rotation.x = (rand() - .5) * .18;
-    group.add(blade);
-  }
-
-  return group;
-}
-
-function createFlowerPatch(rand, materials, scale = 1) {
-  const group = new THREE.Group();
-
-  const stemMaterial = new THREE.MeshStandardMaterial({
-    color: 0x4d7e3e,
-    roughness: 1,
-  });
-
-  const flowerMaterials = [
-    new THREE.MeshStandardMaterial({ color: 0xf8f0cf, roughness: .95 }),
-    new THREE.MeshStandardMaterial({ color: 0xffd879, roughness: .95 }),
-    new THREE.MeshStandardMaterial({ color: 0xd8ecff, roughness: .95 }),
-  ];
-
-  for (let i = 0; i < 5; i += 1) {
-    const stem = new THREE.Mesh(
-      new THREE.CylinderGeometry(.012 * scale, .014 * scale, .18 * scale, 6),
-      stemMaterial,
-    );
-
-    stem.position.set(
-      (rand() - .5) * .34 * scale,
-      .09 * scale,
-      (rand() - .5) * .34 * scale,
-    );
-
-    const flower = new THREE.Mesh(
-      new THREE.SphereGeometry(.045 * scale, 8, 6),
-      flowerMaterials[i % flowerMaterials.length],
-    );
-
-    flower.scale.y = .55;
-    flower.position.set(
-      stem.position.x,
-      .19 * scale,
-      stem.position.z,
-    );
-
-    group.add(stem, flower);
-  }
-
-  return group;
-}
-
-function addMossCap(group, x, z, width, depth, material, rand) {
-  if (rand() < .34) return;
-
-  const moss = new THREE.Mesh(
-    new THREE.SphereGeometry(.5, 12, 7),
-    material,
-  );
-
-  moss.scale.set(
-    width * (.60 + rand() * .16),
-    .035 + rand() * .020,
-    depth * (.58 + rand() * .16),
-  );
-
-  moss.position.set(
-    x + (rand() - .5) * width * .15,
-    .045 + rand() * .012,
-    z + (rand() - .5) * depth * .15,
-  );
-
-  moss.rotation.y = rand() * Math.PI;
-  moss.receiveShadow = true;
-  group.add(moss);
-}
-
-function createVine(rand, material, length = 1.2) {
-  const group = new THREE.Group();
-  const segments = 6;
-
-  for (let i = 0; i < segments; i += 1) {
-    const leaf = new THREE.Mesh(
-      new THREE.SphereGeometry(.075 + rand() * .025, 8, 6),
-      material,
-    );
-
-    leaf.scale.set(1.35, .45, .7);
-    leaf.position.set(
-      Math.sin(i * 1.45) * .08,
-      -(i / (segments - 1)) * length,
-      0,
-    );
-
-    leaf.rotation.z = (rand() - .5) * .9;
-    group.add(leaf);
-  }
-
-  return group;
-}
-
-function createEdgeBlocks(group, materials, rand) {
-  const blockMaterialA = materials.rock;
-  const blockMaterialB = materials.rockDark;
-
-  const addBlock = (x, z, width, depth, edgeRotation = 0) => {
-    const height = .62 + rand() * .28;
-
-    const block = new THREE.Mesh(
-      new THREE.BoxGeometry(width, height, depth),
-      rand() > .34 ? blockMaterialA : blockMaterialB,
-    );
-
-    block.position.set(
-      x,
-      -.42 - height * .35,
-      z,
-    );
-
-    block.rotation.y = edgeRotation + (rand() - .5) * .10;
-    block.rotation.z = (rand() - .5) * .025;
-    block.castShadow = true;
-    block.receiveShadow = true;
-    group.add(block);
-
-    addMossCap(
-      group,
-      x,
-      z,
-      width,
-      depth,
-      materials.grass,
-      rand,
-    );
-  };
-
-  for (let x = -3.95; x <= 3.95; x += .88) {
-    addBlock(
-      x + (rand() - .5) * .12,
-      2.88 + (rand() - .5) * .12,
-      .74 + rand() * .16,
-      .62 + rand() * .12,
-    );
-
-    addBlock(
-      x + (rand() - .5) * .12,
-      -2.88 + (rand() - .5) * .12,
-      .74 + rand() * .16,
-      .62 + rand() * .12,
-    );
-  }
-
-  for (let z = -2.15; z <= 2.15; z += .86) {
-    addBlock(
-      -4.08 + (rand() - .5) * .10,
-      z + (rand() - .5) * .12,
-      .64 + rand() * .12,
-      .72 + rand() * .16,
-      Math.PI / 2,
-    );
-
-    addBlock(
-      4.08 + (rand() - .5) * .10,
-      z + (rand() - .5) * .12,
-      .64 + rand() * .12,
-      .72 + rand() * .16,
-      Math.PI / 2,
-    );
-  }
-}
-
-function createHangingCliffs(group, materials, rand) {
-  const positions = [];
-
-  for (let x = -3.8; x <= 3.8; x += .92) {
-    positions.push([x, 3.03], [x, -3.03]);
-  }
-
-  for (let z = -2.2; z <= 2.2; z += .92) {
-    positions.push([-4.18, z], [4.18, z]);
-  }
-
-  positions.forEach(([x, z], index) => {
-    const height = 1.20 + rand() * 2.05;
-    const radius = .34 + rand() * .20;
-
-    const geometry = new THREE.CylinderGeometry(
-      radius * .55,
-      radius,
-      height,
-      5 + Math.floor(rand() * 3),
-    );
-
-    const cliff = new THREE.Mesh(
-      geometry,
-      index % 3 === 0 ? materials.rockDark : materials.rock,
-    );
-
-    cliff.position.set(
-      x + (rand() - .5) * .24,
-      -1.02 - height * .5,
-      z + (rand() - .5) * .24,
-    );
-
-    cliff.rotation.x = (rand() - .5) * .08;
-    cliff.rotation.z = (rand() - .5) * .08;
-    cliff.rotation.y = rand() * Math.PI;
-    cliff.scale.x = .78 + rand() * .45;
-    cliff.scale.z = .74 + rand() * .40;
-    cliff.castShadow = true;
-    cliff.receiveShadow = true;
-    group.add(cliff);
-  });
-}
-
-
-
-function createIrregularIslandTop(materials) {
+function createIslandShape() {
   const shape = new THREE.Shape();
 
   shape.moveTo(-3.55, -2.05);
@@ -299,29 +63,151 @@ function createIrregularIslandTop(materials) {
   shape.bezierCurveTo(-1.38, -2.50, -2.08, -2.54, -2.72, -2.36);
   shape.bezierCurveTo(-3.12, -2.25, -3.37, -2.16, -3.55, -2.05);
 
+  return shape;
+}
+
+function createSmoothGrassMaterial(materials) {
+  const grass = materials.grass.clone();
+
+  // Critical change: remove the repeating procedural map that caused
+  // the visible "checkerboard / Minecraft" pattern.
+  grass.map = null;
+  grass.bumpMap = null;
+  grass.roughnessMap = null;
+  grass.color.setHex(0x789f5f);
+  grass.roughness = .94;
+  grass.metalness = 0;
+  grass.needsUpdate = true;
+
+  return grass;
+}
+
+function createIslandBody(materials) {
+  const shape = createIslandShape();
+
   const geometry = new THREE.ExtrudeGeometry(shape, {
-    depth: .24,
+    depth: .34,
     bevelEnabled: true,
-    bevelSegments: 3,
-    bevelSize: .12,
-    bevelThickness: .08,
-    curveSegments: 8,
+    bevelSegments: 4,
+    bevelSize: .13,
+    bevelThickness: .10,
+    curveSegments: 12,
     steps: 1,
   });
 
   geometry.rotateX(-Math.PI / 2);
-  geometry.translate(0, -.02, 0);
+  geometry.translate(0, -.29, 0);
 
-  const top = new THREE.Mesh(geometry, [
-    materials.grass,
-    materials.earth,
-  ]);
+  const bodyMaterial = materials.earth.clone();
+  bodyMaterial.color.setHex(0x5a4d3d);
+  bodyMaterial.roughness = 1;
 
-  top.castShadow = true;
-  top.receiveShadow = true;
-  top.name = 'IrregularIslandTop';
+  const body = new THREE.Mesh(geometry, bodyMaterial);
+  body.name = 'IslandEarthBody';
+  body.castShadow = true;
+  body.receiveShadow = true;
 
-  return top;
+  return body;
+}
+
+function createGrassCap(materials) {
+  const shape = createIslandShape();
+
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: .055,
+    bevelEnabled: true,
+    bevelSegments: 3,
+    bevelSize: .07,
+    bevelThickness: .035,
+    curveSegments: 12,
+    steps: 1,
+  });
+
+  geometry.rotateX(-Math.PI / 2);
+  geometry.translate(0, .015, 0);
+
+  const cap = new THREE.Mesh(
+    geometry,
+    createSmoothGrassMaterial(materials),
+  );
+
+  cap.name = 'IslandGrassCap';
+  cap.castShadow = true;
+  cap.receiveShadow = true;
+
+  return cap;
+}
+
+function makeSoftPatchTexture(inner, middle, alpha = .42) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 256;
+
+  const ctx = canvas.getContext('2d');
+  const gradient = ctx.createRadialGradient(128, 128, 8, 128, 128, 124);
+
+  gradient.addColorStop(0, inner);
+  gradient.addColorStop(.50, middle);
+  gradient.addColorStop(1, 'rgba(0,0,0,0)');
+
+  ctx.fillStyle = gradient;
+  ctx.globalAlpha = alpha;
+  ctx.fillRect(0, 0, 256, 256);
+  ctx.globalAlpha = 1;
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.needsUpdate = true;
+
+  return texture;
+}
+
+function createSurfaceVariation(group) {
+  const patches = [
+    [-2.50, -.03, 1.38, 1.80, 1.10, .20, 'moss'],
+    [-1.20, -.03, -1.58, 1.55, 1.00, -.35, 'earth'],
+    [.15, -.03, 1.76, 1.35, .88, .15, 'moss'],
+    [1.64, -.03, -1.55, 1.45, .92, -.18, 'earth'],
+    [2.64, -.03, .92, 1.30, .82, .38, 'moss'],
+    [2.38, -.03, -1.82, 1.05, .70, -.40, 'earth'],
+  ];
+
+  const textures = {
+    moss: makeSoftPatchTexture(
+      'rgba(68,100,43,1)',
+      'rgba(96,125,58,.68)',
+      .30,
+    ),
+    earth: makeSoftPatchTexture(
+      'rgba(104,84,58,1)',
+      'rgba(124,102,69,.62)',
+      .26,
+    ),
+  };
+
+  patches.forEach(([x, y, z, sx, sz, rotation, type]) => {
+    const material = new THREE.MeshBasicMaterial({
+      map: textures[type],
+      transparent: true,
+      opacity: 1,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      side: THREE.DoubleSide,
+    });
+
+    const patch = new THREE.Mesh(
+      new THREE.PlaneGeometry(sx, sz),
+      material,
+    );
+
+    patch.rotation.x = -Math.PI / 2;
+    patch.rotation.z = rotation;
+    patch.position.set(x, .082 + y, z);
+    patch.renderOrder = 2;
+
+    group.add(patch);
+  });
 }
 
 function createSoftEdgeStones(group, materials, rand) {
@@ -347,7 +233,8 @@ function createSoftEdgeStones(group, materials, rand) {
   ];
 
   const material = materials.rock.clone();
-  material.color.offsetHSL(0, -.03, -.035);
+  material.color.setHex(0x9a8f7e);
+  material.roughness = .96;
 
   positions.forEach(([x, z, scale, tilt], index) => {
     const rock = new THREE.Mesh(
@@ -356,19 +243,19 @@ function createSoftEdgeStones(group, materials, rand) {
     );
 
     rock.scale.set(
-      scale * (1.10 + (index % 3) * .08),
-      scale * .42,
-      scale * (.90 + (index % 2) * .12),
+      scale * (1.08 + (index % 3) * .07),
+      scale * .38,
+      scale * (.88 + (index % 2) * .10),
     );
 
     rock.position.set(
-      x + (rand() - .5) * .08,
-      -.18 + (rand() - .5) * .035,
-      z + (rand() - .5) * .08,
+      x + (rand() - .5) * .06,
+      -.18 + (rand() - .5) * .025,
+      z + (rand() - .5) * .06,
     );
 
     rock.rotation.set(
-      (rand() - .5) * .12,
+      (rand() - .5) * .08,
       rand() * Math.PI,
       tilt,
     );
@@ -376,88 +263,6 @@ function createSoftEdgeStones(group, materials, rand) {
     rock.castShadow = true;
     rock.receiveShadow = true;
     group.add(rock);
-  });
-}
-
-function addStoneSurfaceDetails(group, materials, rand) {
-  const chipMaterial = materials.rockDark.clone();
-  chipMaterial.color.offsetHSL(0, 0, -.08);
-  chipMaterial.bumpScale = .11;
-
-  const ledgeMaterial = materials.rock.clone();
-  ledgeMaterial.color.offsetHSL(0, 0, .03);
-
-  const placements = [
-    [-3.35, -.58, 2.42, .22],
-    [-2.45, -.62, 2.50, .16],
-    [-1.10, -.64, 2.49, .18],
-    [.55, -.60, 2.48, .14],
-    [2.05, -.59, 2.43, .19],
-    [3.20, -.60, 2.31, .16],
-    [-3.42, -.58, -2.34, .17],
-    [-2.30, -.61, -2.42, .15],
-    [-.85, -.59, -2.46, .20],
-    [1.10, -.63, -2.42, .17],
-    [2.55, -.61, -2.31, .18],
-  ];
-
-  placements.forEach(([x, y, z, scale], index) => {
-    const fragment = new THREE.Mesh(
-      new THREE.DodecahedronGeometry(1, 0),
-      index % 3 === 0 ? ledgeMaterial : chipMaterial,
-    );
-
-    fragment.scale.set(
-      scale * (1.05 + rand() * .55),
-      scale * (.42 + rand() * .35),
-      scale * (.65 + rand() * .50),
-    );
-
-    fragment.position.set(
-      x + (rand() - .5) * .10,
-      y + (rand() - .5) * .08,
-      z + (rand() - .5) * .08,
-    );
-
-    fragment.rotation.set(
-      rand() * .45,
-      rand() * Math.PI,
-      (rand() - .5) * .30,
-    );
-
-    fragment.castShadow = true;
-    fragment.receiveShadow = true;
-    group.add(fragment);
-  });
-
-  const seamMaterial = new THREE.MeshBasicMaterial({
-    color: 0x4f4a43,
-    transparent: true,
-    opacity: .20,
-    depthWrite: false,
-  });
-
-  const seams = [
-    [-2.96, -.20, 2.555, .42, .012],
-    [-1.54, -.18, 2.555, .34, -.010],
-    [.12, -.17, 2.555, .38, .015],
-    [1.72, -.20, 2.555, .35, -.008],
-    [-2.72, -.20, -2.555, .34, .010],
-    [-1.08, -.19, -2.555, .42, -.012],
-    [.76, -.18, -2.555, .37, .010],
-    [2.35, -.18, -2.555, .31, -.012],
-  ];
-
-  seams.forEach(([x, y, z, height, tilt]) => {
-    const seam = new THREE.Mesh(
-      new THREE.PlaneGeometry(.018, height),
-      seamMaterial,
-    );
-
-    seam.position.set(x, y, z);
-    seam.rotation.z = tilt;
-    seam.rotation.y = z > 0 ? Math.PI : 0;
-    group.add(seam);
   });
 }
 
@@ -483,7 +288,7 @@ function createStonePath(group, material, rand) {
     const tile = new THREE.Mesh(
       new THREE.BoxGeometry(
         width * (.90 + rand() * .18),
-        .11 + rand() * .035,
+        .09 + rand() * .025,
         depth * (.90 + rand() * .18),
       ),
       material,
@@ -491,13 +296,13 @@ function createStonePath(group, material, rand) {
 
     tile.position.set(
       x,
-      .055 + rand() * .015,
-      z + (rand() - .5) * .07,
+      .105 + rand() * .012,
+      z + (rand() - .5) * .05,
     );
 
     tile.rotation.y =
       (index > 7 ? -.42 : 0) +
-      (rand() - .5) * .09;
+      (rand() - .5) * .07;
 
     tile.castShadow = true;
     tile.receiveShadow = true;
@@ -505,107 +310,168 @@ function createStonePath(group, material, rand) {
   });
 }
 
+function createDoorFoundation(group, materials) {
+  const baseMaterial = materials.stone.clone();
+  baseMaterial.color.setHex(0xa69a87);
+  baseMaterial.roughness = .94;
+
+  const base = new THREE.Mesh(
+    new THREE.BoxGeometry(2.55, .16, .76),
+    baseMaterial,
+  );
+  base.position.set(3.45, .07, -1.18);
+  base.castShadow = true;
+  base.receiveShadow = true;
+  group.add(base);
+
+  const sideStoneData = [
+    [2.42, .18, -1.18, .34, .24, .34, .08],
+    [4.48, .18, -1.18, .38, .28, .36, -.06],
+    [2.72, .14, -.80, .32, .20, .26, .18],
+    [4.18, .14, -.82, .30, .19, .24, -.15],
+  ];
+
+  sideStoneData.forEach(([x, y, z, sx, sy, sz, rz]) => {
+    const stone = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(1, 0),
+      materials.rock.clone(),
+    );
+
+    stone.material.color.setHex(0x958a79);
+    stone.material.roughness = .97;
+    stone.scale.set(sx, sy, sz);
+    stone.position.set(x, y, z);
+    stone.rotation.set(.12, rz * 3, rz);
+    stone.castShadow = true;
+    stone.receiveShadow = true;
+    group.add(stone);
+  });
+}
+
+function createGeneratorFoundation(group, materials) {
+  const foundationMaterial = materials.path.clone();
+  foundationMaterial.color.setHex(0xa99e8c);
+  foundationMaterial.roughness = .92;
+
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(1.26, 1.58, 48),
+    foundationMaterial,
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.set(1.30, .095, .50);
+  ring.receiveShadow = true;
+  group.add(ring);
+
+  const plateMaterial = materials.stone.clone();
+  plateMaterial.color.setHex(0xb1a592);
+  plateMaterial.roughness = .94;
+
+  const plateData = [
+    [.00, 1.54, .42, .20],
+    [.68, 1.36, .34, -.18],
+    [-.68, 1.34, .36, .14],
+    [1.08, .78, .30, .28],
+    [-1.06, .80, .32, -.22],
+  ];
+
+  plateData.forEach(([dx, dz, scale, rotation]) => {
+    const plate = new THREE.Mesh(
+      new THREE.BoxGeometry(.56 * scale * 2, .065, .42 * scale * 2),
+      plateMaterial,
+    );
+
+    plate.position.set(
+      1.30 + dx,
+      .105,
+      .50 + dz,
+    );
+
+    plate.rotation.y = rotation;
+    plate.castShadow = true;
+    plate.receiveShadow = true;
+    group.add(plate);
+  });
+}
+
+function createFlowerPatch(rand, scale = 1) {
+  const group = new THREE.Group();
+
+  const stemMaterial = new THREE.MeshStandardMaterial({
+    color: 0x526f45,
+    roughness: 1,
+  });
+
+  const flowerMaterials = [
+    new THREE.MeshStandardMaterial({ color: 0xf3ecd7, roughness: .95 }),
+    new THREE.MeshStandardMaterial({ color: 0xe3d5a7, roughness: .95 }),
+    new THREE.MeshStandardMaterial({ color: 0xdde7d5, roughness: .95 }),
+  ];
+
+  for (let i = 0; i < 5; i += 1) {
+    const stem = new THREE.Mesh(
+      new THREE.CylinderGeometry(.010 * scale, .012 * scale, .16 * scale, 6),
+      stemMaterial,
+    );
+
+    stem.position.set(
+      (rand() - .5) * .30 * scale,
+      .08 * scale,
+      (rand() - .5) * .30 * scale,
+    );
+
+    const flower = new THREE.Mesh(
+      new THREE.SphereGeometry(.035 * scale, 8, 6),
+      flowerMaterials[i % flowerMaterials.length],
+    );
+
+    flower.scale.y = .50;
+    flower.position.set(
+      stem.position.x,
+      .17 * scale,
+      stem.position.z,
+    );
+
+    group.add(stem, flower);
+  }
+
+  return group;
+}
+
 export function createFloatingIsland(baseMaterials) {
   const materials = createEnvironmentMaterials(baseMaterials);
   const island = new THREE.Group();
   const rand = seededRandom(29);
 
-  const earthMaterial = materials.earth;
+  // Layered island instead of one textured tile slab.
+  island.add(createIslandBody(materials));
+  island.add(createGrassCap(materials));
 
-  const soil = new THREE.Mesh(
-    new THREE.BoxGeometry(7.18, .18, 4.66),
-    earthMaterial,
-  );
-
-  soil.position.y = -.24;
-  soil.castShadow = false;
-  soil.receiveShadow = true;
-  soil.visible = false;
-  island.add(soil);
-
-  const irregularTop = createIrregularIslandTop(materials);
-  island.add(irregularTop);
-
+  createSurfaceVariation(island);
   createSoftEdgeStones(island, materials, rand);
-  addStoneSurfaceDetails(island, materials, rand);
   createStonePath(island, materials.path, rand);
-
-  const tuftMaterial = materials.grass.clone();
-  tuftMaterial.color.setHex(0x72995c);
-  tuftMaterial.bumpScale = .018;
-
-  const vineMaterial = new THREE.MeshStandardMaterial({
-    color: 0x4d7a42,
-    roughness: .98,
-  });
-
-  const tuftPositions = [];
-
-  tuftPositions.forEach(([x, z], index) => {
-    const tuft = createGrassTuft(
-      rand,
-      tuftMaterial,
-      .80 + (index % 4) * .08,
-    );
-
-    tuft.position.set(x, .02, z);
-    island.add(tuft);
-  });
+  createDoorFoundation(island, materials);
+  createGeneratorFoundation(island, materials);
 
   const flowerPositions = [
-    [-2.20, -2.05],
-    [2.78, 1.35],
-    [.55, -2.10],
+    [-2.30, -1.88, .66],
+    [.38, -1.96, .60],
+    [2.62, 1.20, .56],
   ];
 
-  flowerPositions.forEach(([x, z], index) => {
-    const patch = createFlowerPatch(
-      rand,
-      baseMaterials,
-      .80 + (index % 3) * .10,
-    );
-
-    patch.position.set(x, .04, z);
+  flowerPositions.forEach(([x, z, scale]) => {
+    const patch = createFlowerPatch(rand, scale);
+    patch.position.set(x, .105, z);
     island.add(patch);
   });
 
-  const boulderMaterial = materials.rockDark.clone();
-  boulderMaterial.bumpScale = .15;
-  boulderMaterial.roughness = 1;
-
-  [].forEach(([x, z, scale]) => {
-    const boulder = new THREE.Mesh(
-      new THREE.DodecahedronGeometry(1, 0),
-      boulderMaterial,
-    );
-
-    boulder.scale.set(
-      scale * 1.35,
-      scale,
-      scale * 1.12,
-    );
-
-    boulder.position.set(x, .09, z);
-    boulder.rotation.set(rand(), rand(), rand());
-    boulder.castShadow = true;
-    island.add(boulder);
-  });
-
-  [].forEach(([x, z, length], index) => {
-    const vine = createVine(rand, vineMaterial, length);
-    vine.position.set(x, -.02, z);
-    vine.rotation.y = index % 2 ? .35 : -.25;
-    island.add(vine);
-  });
-
   [
-    [-3.35, -2.28, .92],
-    [-3.42, 2.15, .92],
-    [2.92, 2.10, .90],
-    [3.12, -.28, .88],
+    [-3.12, -2.08, .78],
+    [-3.20, 1.98, .78],
+    [2.76, 1.94, .76],
+    [3.05, -.20, .74],
   ].forEach(([x, z, scale]) => {
     const lantern = createLantern(baseMaterials, scale);
-    lantern.position.set(x, .03, z);
+    lantern.position.set(x, .09, z);
     island.add(lantern);
   });
 
@@ -619,47 +485,49 @@ export function addCloudscape(scene, baseMaterials) {
   const cloudMaterial = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     transparent: true,
-    opacity: .44,
+    opacity: .32,
     roughness: 1,
     depthWrite: false,
   });
 
-  for (let i = 0; i < 34; i += 1) {
+  // Softer background: fewer, smaller clouds so they do not compete
+  // with the island silhouette.
+  for (let i = 0; i < 22; i += 1) {
     const cloud = new THREE.Mesh(
-      new THREE.SphereGeometry(.65 + rand() * .75, 20, 14),
+      new THREE.SphereGeometry(.52 + rand() * .54, 18, 12),
       cloudMaterial,
     );
 
     cloud.scale.set(
-      1.8 + rand() * 1.7,
-      .48 + rand() * .42,
-      1.05 + rand(),
+      1.55 + rand() * 1.35,
+      .40 + rand() * .30,
+      .90 + rand() * .75,
     );
 
     cloud.position.set(
       (rand() - .5) * 25,
-      -3.8 - rand() * 3.1,
-      (rand() - .5) * 19,
+      -4.1 - rand() * 3.2,
+      (rand() - .5) * 20,
     );
 
     scene.add(cloud);
   }
 
   const waterfallMaterial = new THREE.MeshBasicMaterial({
-    color: 0x7eeaff,
+    color: 0x83e5ff,
     transparent: true,
-    opacity: .40,
+    opacity: .28,
     side: THREE.DoubleSide,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
   });
 
+  // Smaller, more distant background islands.
   const distantData = [
-    [-7.8, 1.0, -8.5, 1.15],
-    [7.1, 2.0, -10.5, 1.35],
-    [-10.5, 3.8, -15, .85],
-    [10.2, 4.5, -16, .95],
-    [-3.8, 5.4, -19.0, .72],
+    [-8.6, 1.2, -10.5, .76],
+    [8.2, 2.0, -12.0, .82],
+    [-11.5, 3.8, -17.0, .62],
+    [10.8, 4.2, -18.0, .68],
   ];
 
   distantData.forEach(([x, y, z, scale], index) => {
@@ -669,69 +537,45 @@ export function addCloudscape(scene, baseMaterials) {
       new THREE.DodecahedronGeometry(1, 1),
       index % 2 ? materials.rock : materials.rockDark,
     );
-    mainRock.scale.set(
-      1.32 * scale,
-      2.05 * scale,
-      1.12 * scale,
-    );
-    mainRock.position.y = -1.20 * scale;
-    mainRock.rotation.set(.08, index * .52, -.04);
-    group.add(mainRock);
 
-    const lowerRock = new THREE.Mesh(
-      new THREE.DodecahedronGeometry(1, 0),
-      materials.rockDark,
+    mainRock.scale.set(
+      1.05 * scale,
+      1.65 * scale,
+      .92 * scale,
     );
-    lowerRock.scale.set(
-      .78 * scale,
-      1.60 * scale,
-      .68 * scale,
-    );
-    lowerRock.position.set(
-      -.18 * scale,
-      -2.75 * scale,
-      .08 * scale,
-    );
-    lowerRock.rotation.set(.10, -.35 + index * .18, .08);
-    group.add(lowerRock);
+
+    mainRock.position.y = -1.05 * scale;
+    mainRock.rotation.set(.08, index * .52, -.04);
 
     const cap = new THREE.Mesh(
-      new THREE.SphereGeometry(1, 16, 10),
-      materials.grass,
+      new THREE.SphereGeometry(1, 14, 9),
+      createSmoothGrassMaterial(materials),
     );
+
     cap.scale.set(
-      1.38 * scale,
-      .18 * scale,
-      1.18 * scale,
+      1.08 * scale,
+      .14 * scale,
+      .92 * scale,
     );
-    cap.position.y = .22 * scale;
-    group.add(cap);
+    cap.position.y = .16 * scale;
 
-    const crownRock = new THREE.Mesh(
-      new THREE.DodecahedronGeometry(.36 * scale, 0),
-      materials.rock,
-    );
-    crownRock.position.set(
-      -.38 * scale,
-      .45 * scale,
-      -.18 * scale,
-    );
-    crownRock.rotation.set(.2, .5, .1);
-    group.add(crownRock);
+    group.add(mainRock, cap);
 
-    if (index < 3) {
+    if (index < 2) {
       const waterfall = new THREE.Mesh(
         new THREE.PlaneGeometry(
-          .20 * scale,
-          2.95 * scale,
+          .14 * scale,
+          2.20 * scale,
         ),
         waterfallMaterial,
       );
+
       waterfall.position.set(
-        .38 * scale,
-        -1.22 * scale,
-        .90 * scale,
+        .30 * scale,
+        -.95 * scale,
+        .76 * scale,
       );
+
       group.add(waterfall);
     }
 
