@@ -120,22 +120,26 @@ function createFlowerPatch(rand, materials, scale = 1) {
 }
 
 function addMossCap(group, x, z, width, depth, material, rand) {
+  if (rand() < .34) return;
+
   const moss = new THREE.Mesh(
-    new THREE.BoxGeometry(
-      width * (.72 + rand() * .16),
-      .055,
-      depth * (.72 + rand() * .16),
-    ),
+    new THREE.SphereGeometry(.5, 12, 7),
     material,
   );
 
-  moss.position.set(
-    x + (rand() - .5) * width * .1,
-    .06,
-    z + (rand() - .5) * depth * .1,
+  moss.scale.set(
+    width * (.60 + rand() * .16),
+    .035 + rand() * .020,
+    depth * (.58 + rand() * .16),
   );
 
-  moss.rotation.y = (rand() - .5) * .13;
+  moss.position.set(
+    x + (rand() - .5) * width * .15,
+    .045 + rand() * .012,
+    z + (rand() - .5) * depth * .15,
+  );
+
+  moss.rotation.y = rand() * Math.PI;
   moss.receiveShadow = true;
   group.add(moss);
 }
@@ -333,7 +337,7 @@ export function createFloatingIsland(baseMaterials) {
   });
 
   const soil = new THREE.Mesh(
-    new THREE.BoxGeometry(8.18, .72, 5.70),
+    new THREE.BoxGeometry(7.70, .72, 5.15),
     earthMaterial,
   );
 
@@ -343,13 +347,49 @@ export function createFloatingIsland(baseMaterials) {
   island.add(soil);
 
   const turf = new THREE.Mesh(
-    new THREE.BoxGeometry(8.06, .18, 5.60),
+    new THREE.BoxGeometry(7.58, .18, 5.02),
     materials.grass,
   );
 
   turf.position.y = -.08;
   turf.receiveShadow = true;
   island.add(turf);
+
+  const exitShelfSoil = new THREE.Mesh(
+    new THREE.BoxGeometry(1.55, .54, 1.18),
+    earthMaterial,
+  );
+  exitShelfSoil.position.set(3.88, -.34, -1.86);
+  exitShelfSoil.rotation.y = -.08;
+  exitShelfSoil.castShadow = true;
+  exitShelfSoil.receiveShadow = true;
+  island.add(exitShelfSoil);
+
+  const exitShelf = new THREE.Mesh(
+    new THREE.BoxGeometry(1.47, .17, 1.10),
+    materials.grass,
+  );
+  exitShelf.position.set(3.88, -.04, -1.86);
+  exitShelf.rotation.y = -.08;
+  exitShelf.receiveShadow = true;
+  island.add(exitShelf);
+
+  const leftShoulder = new THREE.Mesh(
+    new THREE.BoxGeometry(1.30, .64, 1.45),
+    earthMaterial,
+  );
+  leftShoulder.position.set(-3.72, -.44, 1.76);
+  leftShoulder.rotation.y = .35;
+  leftShoulder.castShadow = true;
+  island.add(leftShoulder);
+
+  const leftShoulderTurf = new THREE.Mesh(
+    new THREE.BoxGeometry(1.22, .16, 1.36),
+    materials.grass,
+  );
+  leftShoulderTurf.position.set(-3.72, -.08, 1.76);
+  leftShoulderTurf.rotation.y = .35;
+  island.add(leftShoulderTurf);
 
   createEdgeBlocks(island, materials, rand);
   createHangingCliffs(island, materials, rand);
@@ -511,48 +551,73 @@ export function addCloudscape(scene, baseMaterials) {
   distantData.forEach(([x, y, z, scale], index) => {
     const group = new THREE.Group();
 
-    const rock = new THREE.Mesh(
-      new THREE.CylinderGeometry(
-        .48 * scale,
-        1.35 * scale,
-        3.8 * scale,
-        7,
-      ),
+    const mainRock = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(1, 1),
       index % 2 ? materials.rock : materials.rockDark,
     );
+    mainRock.scale.set(
+      1.32 * scale,
+      2.05 * scale,
+      1.12 * scale,
+    );
+    mainRock.position.y = -1.20 * scale;
+    mainRock.rotation.set(.08, index * .52, -.04);
+    group.add(mainRock);
 
-    rock.position.y = -1.50 * scale;
-    rock.rotation.y = index * .52;
+    const lowerRock = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(1, 0),
+      materials.rockDark,
+    );
+    lowerRock.scale.set(
+      .78 * scale,
+      1.60 * scale,
+      .68 * scale,
+    );
+    lowerRock.position.set(
+      -.18 * scale,
+      -2.75 * scale,
+      .08 * scale,
+    );
+    lowerRock.rotation.set(.10, -.35 + index * .18, .08);
+    group.add(lowerRock);
 
     const cap = new THREE.Mesh(
-      new THREE.CylinderGeometry(
-        1.10 * scale,
-        1.36 * scale,
-        .30 * scale,
-        10,
-      ),
+      new THREE.SphereGeometry(1, 16, 10),
       materials.grass,
     );
+    cap.scale.set(
+      1.38 * scale,
+      .18 * scale,
+      1.18 * scale,
+    );
+    cap.position.y = .22 * scale;
+    group.add(cap);
 
-    cap.position.y = .18;
-
-    group.add(rock, cap);
+    const crownRock = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(.36 * scale, 0),
+      materials.rock,
+    );
+    crownRock.position.set(
+      -.38 * scale,
+      .45 * scale,
+      -.18 * scale,
+    );
+    crownRock.rotation.set(.2, .5, .1);
+    group.add(crownRock);
 
     if (index < 3) {
       const waterfall = new THREE.Mesh(
         new THREE.PlaneGeometry(
-          .24 * scale,
-          3.25 * scale,
+          .20 * scale,
+          2.95 * scale,
         ),
         waterfallMaterial,
       );
-
       waterfall.position.set(
-        .30 * scale,
-        -1.25 * scale,
-        .66 * scale,
+        .38 * scale,
+        -1.22 * scale,
+        .90 * scale,
       );
-
       group.add(waterfall);
     }
 
