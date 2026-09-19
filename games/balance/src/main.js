@@ -134,17 +134,9 @@ const orientationLock = document.querySelector('#orientation-lock');
 
 let orientationBlocked = false;
 
-function isMobileLikeDevice() {
-  return (
-    window.matchMedia('(pointer: coarse)').matches ||
-    navigator.maxTouchPoints > 0 ||
-    Math.min(window.innerWidth, window.innerHeight) <= 600
-  );
-}
-
 function updateOrientationGate() {
   const shouldBlock =
-    isMobileLikeDevice() &&
+    window.innerWidth <= 900 &&
     window.innerHeight > window.innerWidth;
 
   orientationBlocked = shouldBlock;
