@@ -3,7 +3,7 @@ name: Deploy Balance to GitHub Pages
 on:
   push:
     branches:
-      - feature/balance
+      - main
     paths:
       - 'games/balance/**'
       - '.github/workflows/deploy-balance-pages.yml'
@@ -36,6 +36,9 @@ jobs:
           cache: npm
           cache-dependency-path: games/balance/package.json
 
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
       - name: Install dependencies
         run: npm install
 
@@ -53,6 +56,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
