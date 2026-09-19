@@ -102,6 +102,17 @@ app.innerHTML = `
     <strong id="door-value">ЗАЧИНЕНО</strong>
     <span id="door-caption">Потрібен точний баланс ${level01.generator.targetValue}</span>
   </div>
+
+  <div id="orientation-lock" class="orientation-lock" aria-live="polite">
+    <div class="orientation-lock__card">
+      <div class="orientation-lock__phone" aria-hidden="true">
+        <span></span>
+      </div>
+      <strong>Поверніть пристрій</strong>
+      <p>BALANCE працює тільки в альбомній орієнтації.</p>
+      <small>Поверніть телефон горизонтально, щоб продовжити.</small>
+    </div>
+  </div>
 </main>
 `;
 
@@ -119,6 +130,33 @@ const generatorCaption = document.querySelector('#generator-caption');
 const doorTag = document.querySelector('#door-tag');
 const doorValue = document.querySelector('#door-value');
 const doorCaption = document.querySelector('#door-caption');
+const orientationLock = document.querySelector('#orientation-lock');
+
+let orientationBlocked = false;
+
+function isMobileLikeDevice() {
+  return (
+    window.matchMedia('(pointer: coarse)').matches ||
+    navigator.maxTouchPoints > 0 ||
+    Math.min(window.innerWidth, window.innerHeight) <= 600
+  );
+}
+
+function updateOrientationGate() {
+  const shouldBlock =
+    isMobileLikeDevice() &&
+    window.innerHeight > window.innerWidth;
+
+  orientationBlocked = shouldBlock;
+  document.body.classList.toggle('orientation-blocked', shouldBlock);
+  orientationLock.setAttribute('aria-hidden', shouldBlock ? 'false' : 'true');
+
+  if (shouldBlock) {
+    keys?.clear?.();
+  }
+
+  return shouldBlock;
+}
 
 document.querySelector('#restart').addEventListener('click', () => location.reload());
 
@@ -422,7 +460,7 @@ function getLookQuaternion(from, to) {
 }
 
 function canManualControl() {
-  return !moving && phase !== 'done';
+  return !orientationBlocked && !moving && phase !== 'done';
 }
 
 function cancelAutopilot() {
@@ -1223,7 +1261,7 @@ renderer.domElement.addEventListener('pointermove', (event) => {
 });
 
 renderer.domElement.addEventListener('pointerdown', (event) => {
-  if (moving || phase === 'done') return;
+  if (orientationBlocked || moving || phase === 'done') return;
 
   const hit = getInteractiveHit(event);
   if (!hit) return;
@@ -1273,7 +1311,7 @@ const keyboardCodes = new Set([
 ]);
 
 window.addEventListener('keydown', (event) => {
-  if (!keyboardCodes.has(event.code)) return;
+  if (orientationBlocked || !keyboardCodes.has(event.code)) return;
 
   event.preventDefault();
 
@@ -1336,6 +1374,7 @@ function worldToScreen(object, element, yOffset = 0) {
 
 updateGeneratorState({ allowSolve: false });
 updateCoreTags();
+updateOrientationGate();
 
 const clock = new THREE.Clock();
 
@@ -1432,8 +1471,14 @@ function render() {
 
 render();
 
-window.addEventListener('resize', () => {
+function handleViewportChange() {
+  updateOrientationGate();
   camera.aspect = host.clientWidth / host.clientHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(host.clientWidth, host.clientHeight);
+}
+
+window.addEventListener('resize', handleViewportChange);
+window.addEventListener('orientationchange', () => {
+  window.setTimeout(handleViewportChange, 120);
 });
