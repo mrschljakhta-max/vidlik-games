@@ -390,7 +390,8 @@ export async function addExternalNatureAssets(
   ].filter(Boolean);
 
   if (rocks.length) {
-    addCliffSilhouette(root, rocks, materials);
+    // The main cliff silhouette is now deterministic and local in FloatingIsland.js.
+    // External rocks remain only as smaller surface accents.
     addSurfaceRocks(root, rocks, materials);
   }
 
