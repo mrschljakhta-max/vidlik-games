@@ -240,6 +240,7 @@ function createEdgeBlocks(group, materials, rand) {
 
 function createHangingCliffs(group, materials, rand) {
   const positions = [];
+  group.userData.proceduralCliffs ??= [];
 
   for (let x = -3.8; x <= 3.8; x += .92) {
     positions.push([x, 3.03], [x, -3.03]);
@@ -279,6 +280,7 @@ function createHangingCliffs(group, materials, rand) {
     cliff.castShadow = true;
     cliff.receiveShadow = true;
     group.add(cliff);
+    group.userData.proceduralCliffs.push(cliff);
   });
 }
 
@@ -366,6 +368,8 @@ function addStoneSurfaceDetails(group, materials, rand) {
 }
 
 function createStonePath(group, material, rand) {
+  group.userData.proceduralPath ??= [];
+
   const pathPoints = [
     [-3.0, .20],
     [-2.35, .18],
@@ -406,6 +410,7 @@ function createStonePath(group, material, rand) {
     tile.castShadow = true;
     tile.receiveShadow = true;
     group.add(tile);
+    group.userData.proceduralPath.push(tile);
   });
 }
 
