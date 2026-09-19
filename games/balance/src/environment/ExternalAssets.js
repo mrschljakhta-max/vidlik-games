@@ -124,24 +124,6 @@ function addRubble(target, source, materials) {
   });
 }
 
-function addDoorShell(target, source, materials, doorPosition) {
-  const shell = clonePrepared(source, materials.stone);
-
-  shell.name = 'QuaterniusDoorShell';
-  shell.scale.set(1.50, 1.10, 1.28);
-  shell.position.set(
-    doorPosition.x,
-    doorPosition.y + .02,
-    doorPosition.z - .16,
-  );
-
-  // The source wall faces +Z like the functional door.
-  shell.rotation.y = 0;
-
-  target.add(shell);
-  return shell;
-}
-
 function addAssetCredit(target) {
   target.userData.externalAssetCredits = [
     {
@@ -152,7 +134,6 @@ function addAssetCredit(target) {
         'Floor_UnevenBrick',
         'Prop_Vine4',
         'Prop_Brick1',
-        'Wall_UnevenBrick_Door_Round',
       ],
     },
   ];
@@ -161,9 +142,7 @@ function addAssetCredit(target) {
 export async function addExternalEnvironmentAssets(
   scene,
   materials,
-  {
-    doorPosition = new THREE.Vector3(3.45, 0, -1.20),
-  } = {},
+  _options = {},
 ) {
   const root = new THREE.Group();
   root.name = 'ExternalEnvironmentAssets';
@@ -175,10 +154,9 @@ export async function addExternalEnvironmentAssets(
     loadModel('Floor_UnevenBrick.gltf'),
     loadModel('Prop_Vine4.gltf'),
     loadModel('Prop_Brick1.gltf'),
-    loadModel('Wall_UnevenBrick_Door_Round.gltf'),
   ]);
 
-  const [floorResult, vineResult, brickResult, wallResult] = results;
+  const [floorResult, vineResult, brickResult] = results;
 
   if (floorResult.status === 'fulfilled') {
     addRealStonePath(root, floorResult.value, materials);
@@ -198,11 +176,6 @@ export async function addExternalEnvironmentAssets(
     console.warn('VIDLIK: external rubble asset failed to load', brickResult.reason);
   }
 
-  if (wallResult.status === 'fulfilled') {
-    addDoorShell(root, wallResult.value, materials, doorPosition);
-  } else {
-    console.warn('VIDLIK: external door shell failed to load', wallResult.reason);
-  }
 
   return root;
 }
