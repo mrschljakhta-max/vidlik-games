@@ -457,3 +457,66 @@ select {
     padding: 4px 6px;
   }
 }
+
+
+.interaction-prompt {
+  position: absolute;
+  z-index: 24;
+  left: 50%;
+  bottom: 22px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 13px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 10px);
+  transition:
+    opacity .18s ease,
+    transform .18s ease;
+}
+
+.interaction-prompt.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.interaction-prompt kbd {
+  min-width: 54px;
+  padding: 5px 8px;
+  border: 1px solid rgba(103, 231, 255, .34);
+  border-radius: 8px;
+  color: #eefcff;
+  background: rgba(76, 220, 255, .10);
+  box-shadow:
+    inset 0 -1px 0 rgba(255, 255, 255, .05),
+    0 0 18px rgba(76, 220, 255, .08);
+  font-size: 11px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.interaction-prompt span {
+  color: #d7e9f4;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .controls-help span:nth-child(3) {
+    display: none;
+  }
+
+  .interaction-prompt {
+    bottom: 66px;
+    max-width: calc(100vw - 24px);
+    padding: 8px 10px;
+  }
+
+  .interaction-prompt span {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
