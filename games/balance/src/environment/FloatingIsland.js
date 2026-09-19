@@ -417,11 +417,11 @@ export function createFloatingIsland(baseMaterials) {
   const earthMaterial = materials.earth;
 
   const soil = new THREE.Mesh(
-    new THREE.BoxGeometry(7.70, .72, 5.15),
+    new THREE.BoxGeometry(7.70, .46, 5.15),
     earthMaterial,
   );
 
-  soil.position.y = -.48;
+  soil.position.y = -.35;
   soil.castShadow = true;
   soil.receiveShadow = true;
   island.add(soil);
@@ -472,7 +472,6 @@ export function createFloatingIsland(baseMaterials) {
   island.add(leftShoulderTurf);
 
   createEdgeBlocks(island, materials, rand);
-  createHangingCliffs(island, materials, rand);
   addStoneSurfaceDetails(island, materials, rand);
   createStonePath(island, materials.path, rand);
 
@@ -485,13 +484,7 @@ export function createFloatingIsland(baseMaterials) {
     roughness: .98,
   });
 
-  const tuftPositions = [
-    [-3.45, 2.33], [-2.65, 2.38], [-1.80, 2.42], [-.75, 2.46],
-    [.18, 2.46], [1.22, 2.40], [2.12, 2.32], [3.14, 2.02],
-    [3.50, 1.22], [3.48, -.10], [3.35, -1.94], [2.55, -2.35],
-    [1.40, -2.46], [.35, -2.43], [-1.15, -2.46], [-2.55, -2.38],
-    [-3.45, -1.95], [-3.62, -.85], [-3.60, .90],
-  ];
+  const tuftPositions = [];
 
   tuftPositions.forEach(([x, z], index) => {
     const tuft = createGrassTuft(
@@ -505,12 +498,8 @@ export function createFloatingIsland(baseMaterials) {
   });
 
   const flowerPositions = [
-    [-3.05, 1.55],
     [-2.20, -2.05],
-    [-.75, 2.10],
-    [1.95, 2.00],
     [2.78, 1.35],
-    [2.56, -2.02],
     [.55, -2.10],
   ];
 
@@ -529,13 +518,7 @@ export function createFloatingIsland(baseMaterials) {
   boulderMaterial.bumpScale = .15;
   boulderMaterial.roughness = 1;
 
-  [
-    [-3.28, 1.68, .28],
-    [-2.60, -2.04, .23],
-    [2.55, 2.05, .25],
-    [3.15, -1.92, .22],
-    [.10, 2.27, .20],
-  ].forEach(([x, z, scale]) => {
+  [].forEach(([x, z, scale]) => {
     const boulder = new THREE.Mesh(
       new THREE.DodecahedronGeometry(1, 0),
       boulderMaterial,
@@ -553,13 +536,7 @@ export function createFloatingIsland(baseMaterials) {
     island.add(boulder);
   });
 
-  [
-    [-3.72, 1.90, 1.20],
-    [-3.86, -.42, .95],
-    [-2.95, -2.70, 1.05],
-    [1.75, -2.72, 1.15],
-    [3.82, 1.48, .90],
-  ].forEach(([x, z, length], index) => {
+  [].forEach(([x, z, length], index) => {
     const vine = createVine(rand, vineMaterial, length);
     vine.position.set(x, -.02, z);
     vine.rotation.y = index % 2 ? .35 : -.25;
