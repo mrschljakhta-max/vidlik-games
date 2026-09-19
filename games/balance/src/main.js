@@ -12,6 +12,9 @@ import {
   addCloudscape,
 } from './environment/FloatingIsland.js';
 import {
+  createEnvironmentMaterials,
+} from './environment/TextureFactory.js';
+import {
   createEnergyCore,
   createCorePedestal,
   createGenerator,
@@ -171,18 +174,22 @@ const materials = {
   rock: new THREE.MeshPhysicalMaterial({
     color: 0x6f6d68,
     roughness: .82,
+    metalness: .01,
   }),
   rockDark: new THREE.MeshPhysicalMaterial({
     color: 0x4e504e,
     roughness: .9,
+    metalness: .01,
   }),
   grass: new THREE.MeshStandardMaterial({
     color: 0x5b7d50,
     roughness: .95,
+    metalness: 0,
   }),
   stone: new THREE.MeshPhysicalMaterial({
     color: 0x8c8c84,
     roughness: .74,
+    metalness: .01,
   }),
   dark: new THREE.MeshPhysicalMaterial({
     color: 0x101820,
@@ -225,11 +232,14 @@ const materials = {
     emissiveIntensity: 5.2,
   }),
   door: new THREE.MeshPhysicalMaterial({
-    color: 0x29323a,
-    roughness: .42,
-    metalness: .75,
+    color: 0x60432f,
+    roughness: .78,
+    metalness: .04,
   }),
 };
+
+const detailedMaterials = createEnvironmentMaterials(materials);
+Object.assign(materials, detailedMaterials);
 
 scene.add(createFloatingIsland(materials));
 addCloudscape(scene, materials);
