@@ -80,36 +80,36 @@ export function createCorePedestal(materials, value = 2) {
   const group = new THREE.Group();
 
   const base = new THREE.Mesh(
-    new THREE.CylinderGeometry(.66, .78, .28, 32),
+    new THREE.CylinderGeometry(.50, .58, .22, 32),
     materials.dark,
   );
   base.position.y = .02;
   base.castShadow = true;
 
   const stone = new THREE.Mesh(
-    new THREE.CylinderGeometry(.50, .59, .26, 32),
+    new THREE.CylinderGeometry(.39, .46, .20, 32),
     materials.stone,
   );
-  stone.position.y = .26;
+  stone.position.y = .20;
   stone.castShadow = true;
 
   const ringMaterial = makePolarityLineMaterial(value, materials);
   ringMaterial.emissiveIntensity = 2.4;
 
   const ring = new THREE.Mesh(
-    new THREE.TorusGeometry(.45, .045, 12, 48),
+    new THREE.TorusGeometry(.35, .035, 12, 48),
     ringMaterial,
   );
   ring.rotation.x = Math.PI / 2;
-  ring.position.y = .42;
+  ring.position.y = .32;
 
   const light = new THREE.PointLight(
     value < 0 ? 0xf04dff : 0x4ee5ff,
-    3.2,
-    2.8,
+    2.7,
+    2.4,
     2,
   );
-  light.position.y = .68;
+  light.position.y = .54;
 
   group.add(base, stone, ring, light);
   group.userData = { ring, light, value };
