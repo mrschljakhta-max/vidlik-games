@@ -95,27 +95,27 @@ export function createDoor(materials) {
   const group = new THREE.Group();
 
   const left = new THREE.Mesh(new THREE.BoxGeometry(.34, 2.8, .52), materials.stone);
-  left.position.set(-.95, 1.26, 0);
+  left.position.set(-1.20, 1.26, 0);
   left.castShadow = true;
 
   const right = left.clone();
-  right.position.x = .95;
+  right.position.x = 1.20;
 
-  const top = new THREE.Mesh(new THREE.BoxGeometry(2.25, .36, .52), materials.stone);
+  const top = new THREE.Mesh(new THREE.BoxGeometry(2.75, .36, .52), materials.stone);
   top.position.set(0, 2.57, 0);
   top.castShadow = true;
 
-  const panel = new THREE.Mesh(new THREE.BoxGeometry(1.55, 2.30, .20), materials.door);
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(2.02, 2.30, .20), materials.door);
   panel.position.set(0, 1.20, .03);
   panel.castShadow = true;
 
   const trimMaterial = materials.gold.clone();
   trimMaterial.emissiveIntensity = .22;
   const trimL = new THREE.Mesh(new THREE.BoxGeometry(.08, 2.08, .05), trimMaterial);
-  trimL.position.set(-.68, 1.23, .17);
+  trimL.position.set(-.88, 1.23, .17);
 
   const trimR = new THREE.Mesh(new THREE.BoxGeometry(.08, 2.08, .05), trimMaterial.clone());
-  trimR.position.set(.68, 1.23, .17);
+  trimR.position.set(.88, 1.23, .17);
 
   const portalMaterial = new THREE.MeshBasicMaterial({
     color: 0x63e7ff,
@@ -124,7 +124,7 @@ export function createDoor(materials) {
     side: THREE.DoubleSide,
     depthWrite: false,
   });
-  const portal = new THREE.Mesh(new THREE.PlaneGeometry(1.48, 2.16), portalMaterial);
+  const portal = new THREE.Mesh(new THREE.PlaneGeometry(1.95, 2.16), portalMaterial);
   portal.position.set(0, 1.20, -.16);
 
   const portalLight = new THREE.PointLight(0x4ee5ff, 0, 5, 2);
