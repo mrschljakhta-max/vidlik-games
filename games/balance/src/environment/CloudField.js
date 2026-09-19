@@ -2,7 +2,6 @@ import * as THREE from 'three';
 
 function seededRandom(seed = 417) {
   let value = seed >>> 0;
-
   return () => {
     value = (value * 1664525 + 1013904223) >>> 0;
     return value / 4294967296;
@@ -15,72 +14,69 @@ function createCloudTexture(variant = 0) {
   canvas.height = 512;
 
   const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
 
-  // Soft transparent shadow under the cloud.
-  const shadow = ctx.createRadialGradient(512, 330, 40, 512, 330, 360);
-  shadow.addColorStop(0, 'rgba(92,132,160,.22)');
-  shadow.addColorStop(.62, 'rgba(117,151,176,.12)');
-  shadow.addColorStop(1, 'rgba(117,151,176,0)');
-
+  const shadow = ctx.createRadialGradient(512, 340, 32, 512, 340, 360);
+  shadow.addColorStop(0, 'rgba(88,132,160,0.18)');
+  shadow.addColorStop(0.55, 'rgba(110,146,173,0.10)');
+  shadow.addColorStop(1, 'rgba(110,146,173,0)');
   ctx.fillStyle = shadow;
   ctx.beginPath();
-  ctx.ellipse(512, 330, 360, 92, 0, 0, Math.PI * 2);
+  ctx.ellipse(512, 332, 360, 86, 0, 0, Math.PI * 2);
   ctx.fill();
 
   const variants = [
     [
-      [240, 286, 150, 74],
-      [350, 240, 170, 112],
-      [485, 215, 190, 132],
-      [640, 242, 180, 110],
-      [770, 292, 145, 72],
+      [240, 294, 138, 70],
+      [358, 244, 164, 110],
+      [496, 214, 198, 136],
+      [646, 242, 182, 112],
+      [782, 292, 136, 68],
     ],
     [
-      [220, 300, 130, 66],
-      [338, 258, 165, 96],
-      [465, 230, 152, 118],
-      [585, 205, 170, 132],
-      [720, 248, 172, 102],
-      [820, 300, 116, 62],
+      [220, 304, 126, 62],
+      [340, 260, 158, 96],
+      [466, 230, 150, 116],
+      [586, 210, 170, 132],
+      [728, 250, 172, 102],
+      [828, 304, 106, 54],
     ],
     [
-      [245, 300, 150, 70],
-      [380, 248, 185, 108],
-      [520, 202, 150, 138],
-      [645, 242, 182, 110],
-      [785, 290, 132, 66],
+      [250, 304, 146, 68],
+      [388, 252, 182, 104],
+      [522, 206, 148, 138],
+      [652, 242, 176, 110],
+      [790, 292, 124, 62],
     ],
     [
-      [230, 296, 140, 68],
-      [345, 252, 150, 102],
-      [470, 220, 175, 128],
-      [610, 214, 150, 120],
-      [730, 252, 165, 94],
-      [820, 300, 108, 58],
+      [232, 298, 138, 66],
+      [348, 252, 150, 102],
+      [474, 220, 174, 126],
+      [612, 216, 148, 118],
+      [730, 252, 162, 92],
+      [822, 302, 100, 56],
     ],
   ];
 
   const puffs = variants[variant % variants.length];
 
-  // Unified cloud body. All puffs are painted into one texture,
-  // so visually it reads as one soft silhouette rather than separate balls.
   ctx.save();
   ctx.filter = 'blur(2px)';
 
-  puffs.forEach(([x, y, rx, ry], index) => {
+  puffs.forEach(([x, y, rx, ry]) => {
     const grad = ctx.createRadialGradient(
-      x - rx * .18,
-      y - ry * .32,
-      ry * .08,
+      x - rx * 0.18,
+      y - ry * 0.30,
+      ry * 0.08,
       x,
       y,
-      Math.max(rx, ry),
+      Math.max(rx, ry)
     );
 
-    grad.addColorStop(0, 'rgba(255,255,255,.98)');
-    grad.addColorStop(.56, 'rgba(250,253,255,.96)');
-    grad.addColorStop(.82, 'rgba(228,242,250,.88)');
-    grad.addColorStop(1, 'rgba(207,229,241,.18)');
+    grad.addColorStop(0, 'rgba(255,255,255,0.98)');
+    grad.addColorStop(0.58, 'rgba(250,253,255,0.96)');
+    grad.addColorStop(0.84, 'rgba(228,242,250,0.88)');
+    grad.addColorStop(1, 'rgba(205,226,238,0.16)');
 
     ctx.fillStyle = grad;
     ctx.beginPath();
@@ -88,26 +84,23 @@ function createCloudTexture(variant = 0) {
     ctx.fill();
   });
 
-  // A broad lower body makes the bottom flatter and more cohesive.
-  const bodyGrad = ctx.createLinearGradient(0, 250, 0, 365);
-  bodyGrad.addColorStop(0, 'rgba(248,252,255,.90)');
-  bodyGrad.addColorStop(.64, 'rgba(231,243,250,.88)');
-  bodyGrad.addColorStop(1, 'rgba(190,216,232,.28)');
-
+  const bodyGrad = ctx.createLinearGradient(0, 250, 0, 370);
+  bodyGrad.addColorStop(0, 'rgba(248,252,255,0.88)');
+  bodyGrad.addColorStop(0.66, 'rgba(231,243,250,0.86)');
+  bodyGrad.addColorStop(1, 'rgba(188,214,230,0.24)');
   ctx.fillStyle = bodyGrad;
   ctx.beginPath();
-  ctx.ellipse(512, 300, 330, 92, 0, 0, Math.PI * 2);
+  ctx.ellipse(512, 304, 332, 88, 0, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
 
-  // Soft highlight ridge along the top.
-  const highlight = ctx.createLinearGradient(0, 125, 0, 285);
-  highlight.addColorStop(0, 'rgba(255,255,255,.34)');
+  const highlight = ctx.createLinearGradient(0, 126, 0, 286);
+  highlight.addColorStop(0, 'rgba(255,255,255,0.34)');
   highlight.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = highlight;
   ctx.beginPath();
-  ctx.ellipse(500, 220, 250, 88, 0, 0, Math.PI * 2);
+  ctx.ellipse(500, 220, 248, 84, 0, 0, Math.PI * 2);
   ctx.fill();
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -116,27 +109,18 @@ function createCloudTexture(variant = 0) {
   texture.magFilter = THREE.LinearFilter;
   texture.generateMipmaps = true;
   texture.needsUpdate = true;
-
   return texture;
 }
 
 const textureCache = new Map();
-
 function getCloudTexture(variant) {
   if (!textureCache.has(variant)) {
     textureCache.set(variant, createCloudTexture(variant));
   }
-
   return textureCache.get(variant);
 }
 
-function createCloudSprite({
-  variant,
-  opacity,
-  width,
-  height,
-  tint = 0xffffff,
-}) {
+function createCloudSprite({ variant, opacity, width, height, tint = 0xffffff }) {
   const material = new THREE.SpriteMaterial({
     map: getCloudTexture(variant),
     color: tint,
@@ -149,8 +133,7 @@ function createCloudSprite({
 
   const sprite = new THREE.Sprite(material);
   sprite.scale.set(width, height, 1);
-  sprite.center.set(.5, .5);
-
+  sprite.center.set(0.5, 0.5);
   return sprite;
 }
 
@@ -171,6 +154,8 @@ function addCloudLayer(root, rand, config) {
     speedMax,
     driftMin,
     driftMax,
+    tiltMin,
+    tiltMax,
     tint,
   } = config;
 
@@ -189,109 +174,122 @@ function addCloudLayer(root, rand, config) {
 
     const angle = rand() * Math.PI * 2;
     const radius = THREE.MathUtils.lerp(radiusMin, radiusMax, rand());
+    const baseX = Math.cos(angle) * radius;
+    const baseZ = Math.sin(angle) * radius;
+    const baseY = THREE.MathUtils.lerp(yMin, yMax, rand());
 
-    cloud.position.set(
-      Math.cos(angle) * radius,
-      THREE.MathUtils.lerp(yMin, yMax, rand()),
-      Math.sin(angle) * radius,
-    );
-
+    cloud.position.set(baseX, baseY, baseZ);
+    cloud.material.rotation = THREE.MathUtils.lerp(tiltMin, tiltMax, rand());
     root.add(cloud);
 
     root.userData.clouds.push({
       object: cloud,
-      baseX: cloud.position.x,
-      baseY: cloud.position.y,
-      baseZ: cloud.position.z,
+      baseX,
+      baseY,
+      baseZ,
       phase: rand() * Math.PI * 2,
       speed: THREE.MathUtils.lerp(speedMin, speedMax, rand()),
-      drift: THREE.MathUtils.lerp(driftMin, driftMax, rand()),
-      bobSpeed: THREE.MathUtils.lerp(.18, .34, rand()),
-      bobAmount: THREE.MathUtils.lerp(.025, .065, rand()),
+      driftX: THREE.MathUtils.lerp(driftMin, driftMax, rand()),
+      driftZ: THREE.MathUtils.lerp(driftMin * 0.7, driftMax * 0.95, rand()),
+      bobSpeed: THREE.MathUtils.lerp(0.16, 0.32, rand()),
+      bobAmount: THREE.MathUtils.lerp(0.018, 0.065, rand()),
+      rotationSwing: THREE.MathUtils.lerp(0.01, 0.035, rand()),
+      opacityPulse: THREE.MathUtils.lerp(0.015, 0.05, rand()),
+      baseOpacity: opacity,
     });
   }
 }
 
 export function createCloudField() {
   const root = new THREE.Group();
-  root.name = 'StylizedCloudFieldV2';
+  root.name = 'StylizedCloudFieldV3';
   root.userData.clouds = [];
 
   const rand = seededRandom(911);
 
-  // Large lower clouds create a soft sea beneath the floating island.
   addCloudLayer(root, rand, {
     count: 5,
     radiusMin: 5.8,
-    radiusMax: 10.5,
-    yMin: -5.2,
-    yMax: -3.2,
-    widthMin: 5.2,
-    widthMax: 8.4,
-    aspectMin: .34,
-    aspectMax: .44,
-    opacityMin: .72,
-    opacityMax: .90,
-    speedMin: .025,
-    speedMax: .042,
-    driftMin: .42,
-    driftMax: .72,
+    radiusMax: 10.8,
+    yMin: -5.4,
+    yMax: -3.3,
+    widthMin: 5.4,
+    widthMax: 8.8,
+    aspectMin: 0.34,
+    aspectMax: 0.44,
+    opacityMin: 0.74,
+    opacityMax: 0.90,
+    speedMin: 0.024,
+    speedMax: 0.040,
+    driftMin: 0.32,
+    driftMax: 0.66,
+    tiltMin: -0.06,
+    tiltMax: 0.06,
     tint: 0xf4fbff,
   });
 
-  // Mid-distance clouds frame the scene without cluttering the island.
   addCloudLayer(root, rand, {
     count: 5,
-    radiusMin: 10.0,
-    radiusMax: 15.5,
-    yMin: -1.4,
+    radiusMin: 10.2,
+    radiusMax: 15.8,
+    yMin: -1.2,
     yMax: 3.8,
-    widthMin: 3.6,
-    widthMax: 5.8,
-    aspectMin: .32,
-    aspectMax: .42,
-    opacityMin: .52,
-    opacityMax: .72,
-    speedMin: .018,
-    speedMax: .032,
-    driftMin: .32,
-    driftMax: .52,
-    tint: 0xf1f9ff,
+    widthMin: 3.8,
+    widthMax: 6.1,
+    aspectMin: 0.32,
+    aspectMax: 0.42,
+    opacityMin: 0.50,
+    opacityMax: 0.72,
+    speedMin: 0.016,
+    speedMax: 0.028,
+    driftMin: 0.24,
+    driftMax: 0.48,
+    tiltMin: -0.05,
+    tiltMax: 0.05,
+    tint: 0xf0f8ff,
   });
 
-  // Far atmospheric silhouettes.
   addCloudLayer(root, rand, {
     count: 4,
     radiusMin: 16.0,
     radiusMax: 23.0,
-    yMin: .4,
-    yMax: 5.6,
+    yMin: 0.6,
+    yMax: 5.8,
     widthMin: 4.8,
-    widthMax: 7.6,
-    aspectMin: .30,
-    aspectMax: .38,
-    opacityMin: .22,
-    opacityMax: .38,
-    speedMin: .010,
-    speedMax: .020,
-    driftMin: .20,
-    driftMax: .36,
-    tint: 0xe8f5ff,
+    widthMax: 7.8,
+    aspectMin: 0.30,
+    aspectMax: 0.38,
+    opacityMin: 0.22,
+    opacityMax: 0.38,
+    speedMin: 0.008,
+    speedMax: 0.016,
+    driftMin: 0.16,
+    driftMax: 0.32,
+    tiltMin: -0.04,
+    tiltMax: 0.04,
+    tint: 0xe8f4ff,
   });
 
   root.userData.update = (time) => {
     for (const cloud of root.userData.clouds) {
-      const a = time * cloud.speed + cloud.phase;
+      const t = time * cloud.speed + cloud.phase;
 
-      cloud.object.position.x =
-        cloud.baseX + Math.cos(a) * cloud.drift;
-
-      cloud.object.position.z =
-        cloud.baseZ + Math.sin(a) * cloud.drift;
-
+      cloud.object.position.x = cloud.baseX + Math.cos(t) * cloud.driftX;
+      cloud.object.position.z = cloud.baseZ + Math.sin(t * 0.86) * cloud.driftZ;
       cloud.object.position.y =
         cloud.baseY +
         Math.sin(time * cloud.bobSpeed + cloud.phase) * cloud.bobAmount;
+
+      if (cloud.object.material) {
+        cloud.object.material.rotation =
+          Math.sin(t * 0.5) * cloud.rotationSwing;
+
+        cloud.object.material.opacity = THREE.MathUtils.clamp(
+          cloud.baseOpacity + Math.sin(t * 0.7) * cloud.opacityPulse,
+          0.12,
+          0.95,
+        );
+      }
     }
   };
 
