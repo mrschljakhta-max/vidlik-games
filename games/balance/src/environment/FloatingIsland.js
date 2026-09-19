@@ -282,6 +282,89 @@ function createHangingCliffs(group, materials, rand) {
   });
 }
 
+
+function addStoneSurfaceDetails(group, materials, rand) {
+  const chipMaterial = materials.rockDark.clone();
+  chipMaterial.color.offsetHSL(0, 0, -.08);
+  chipMaterial.bumpScale = .11;
+
+  const ledgeMaterial = materials.rock.clone();
+  ledgeMaterial.color.offsetHSL(0, 0, .03);
+
+  const placements = [
+    [-3.35, -.58, 2.42, .22],
+    [-2.45, -.62, 2.50, .16],
+    [-1.10, -.64, 2.49, .18],
+    [.55, -.60, 2.48, .14],
+    [2.05, -.59, 2.43, .19],
+    [3.20, -.60, 2.31, .16],
+    [-3.42, -.58, -2.34, .17],
+    [-2.30, -.61, -2.42, .15],
+    [-.85, -.59, -2.46, .20],
+    [1.10, -.63, -2.42, .17],
+    [2.55, -.61, -2.31, .18],
+  ];
+
+  placements.forEach(([x, y, z, scale], index) => {
+    const fragment = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(1, 0),
+      index % 3 === 0 ? ledgeMaterial : chipMaterial,
+    );
+
+    fragment.scale.set(
+      scale * (1.05 + rand() * .55),
+      scale * (.42 + rand() * .35),
+      scale * (.65 + rand() * .50),
+    );
+
+    fragment.position.set(
+      x + (rand() - .5) * .10,
+      y + (rand() - .5) * .08,
+      z + (rand() - .5) * .08,
+    );
+
+    fragment.rotation.set(
+      rand() * .45,
+      rand() * Math.PI,
+      (rand() - .5) * .30,
+    );
+
+    fragment.castShadow = true;
+    fragment.receiveShadow = true;
+    group.add(fragment);
+  });
+
+  const seamMaterial = new THREE.MeshBasicMaterial({
+    color: 0x4f4a43,
+    transparent: true,
+    opacity: .20,
+    depthWrite: false,
+  });
+
+  const seams = [
+    [-2.96, -.20, 2.555, .42, .012],
+    [-1.54, -.18, 2.555, .34, -.010],
+    [.12, -.17, 2.555, .38, .015],
+    [1.72, -.20, 2.555, .35, -.008],
+    [-2.72, -.20, -2.555, .34, .010],
+    [-1.08, -.19, -2.555, .42, -.012],
+    [.76, -.18, -2.555, .37, .010],
+    [2.35, -.18, -2.555, .31, -.012],
+  ];
+
+  seams.forEach(([x, y, z, height, tilt]) => {
+    const seam = new THREE.Mesh(
+      new THREE.PlaneGeometry(.018, height),
+      seamMaterial,
+    );
+
+    seam.position.set(x, y, z);
+    seam.rotation.z = tilt;
+    seam.rotation.y = z > 0 ? Math.PI : 0;
+    group.add(seam);
+  });
+}
+
 function createStonePath(group, material, rand) {
   const pathPoints = [
     [-3.0, .20],
@@ -331,10 +414,7 @@ export function createFloatingIsland(baseMaterials) {
   const island = new THREE.Group();
   const rand = seededRandom(29);
 
-  const earthMaterial = new THREE.MeshStandardMaterial({
-    color: 0x4b493f,
-    roughness: 1,
-  });
+  const earthMaterial = materials.earth;
 
   const soil = new THREE.Mesh(
     new THREE.BoxGeometry(7.70, .72, 5.15),
@@ -393,12 +473,12 @@ export function createFloatingIsland(baseMaterials) {
 
   createEdgeBlocks(island, materials, rand);
   createHangingCliffs(island, materials, rand);
+  addStoneSurfaceDetails(island, materials, rand);
   createStonePath(island, materials.path, rand);
 
-  const tuftMaterial = new THREE.MeshStandardMaterial({
-    color: 0x72995c,
-    roughness: 1,
-  });
+  const tuftMaterial = materials.grass.clone();
+  tuftMaterial.color.setHex(0x72995c);
+  tuftMaterial.bumpScale = .018;
 
   const vineMaterial = new THREE.MeshStandardMaterial({
     color: 0x4d7a42,
@@ -446,6 +526,8 @@ export function createFloatingIsland(baseMaterials) {
   });
 
   const boulderMaterial = materials.rockDark.clone();
+  boulderMaterial.bumpScale = .15;
+  boulderMaterial.roughness = 1;
 
   [
     [-3.28, 1.68, .28],
