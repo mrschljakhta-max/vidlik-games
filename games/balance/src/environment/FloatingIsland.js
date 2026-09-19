@@ -69,13 +69,11 @@ function createIslandShape() {
 function createSmoothGrassMaterial(materials) {
   const grass = materials.grass.clone();
 
-  // Critical change: remove the repeating procedural map that caused
-  // the visible "checkerboard / Minecraft" pattern.
   grass.map = null;
   grass.bumpMap = null;
   grass.roughnessMap = null;
-  grass.color.setHex(0x789f5f);
-  grass.roughness = .94;
+  grass.color.setHex(0x8fc86a);
+  grass.roughness = .93;
   grass.metalness = 0;
   grass.needsUpdate = true;
 
@@ -99,8 +97,8 @@ function createIslandBody(materials) {
   geometry.translate(0, -.29, 0);
 
   const bodyMaterial = materials.earth.clone();
-  bodyMaterial.color.setHex(0x5a4d3d);
-  bodyMaterial.roughness = 1;
+  bodyMaterial.color.setHex(0x665542);
+  bodyMaterial.roughness = .98;
 
   const body = new THREE.Mesh(geometry, bodyMaterial);
   body.name = 'IslandEarthBody';
@@ -144,10 +142,10 @@ function makeSoftPatchTexture(inner, middle, alpha = .42) {
   canvas.height = 256;
 
   const ctx = canvas.getContext('2d');
-  const gradient = ctx.createRadialGradient(128, 128, 8, 128, 128, 124);
+  const gradient = ctx.createRadialGradient(128, 128, 10, 128, 128, 124);
 
   gradient.addColorStop(0, inner);
-  gradient.addColorStop(.50, middle);
+  gradient.addColorStop(.56, middle);
   gradient.addColorStop(1, 'rgba(0,0,0,0)');
 
   ctx.fillStyle = gradient;
@@ -163,25 +161,24 @@ function makeSoftPatchTexture(inner, middle, alpha = .42) {
 }
 
 function createSurfaceVariation(group) {
+  // Keep patches subtle and sparse so the island reads as grass-first.
   const patches = [
-    [-2.50, -.03, 1.38, 1.80, 1.10, .20, 'moss'],
-    [-1.20, -.03, -1.58, 1.55, 1.00, -.35, 'earth'],
-    [.15, -.03, 1.76, 1.35, .88, .15, 'moss'],
-    [1.64, -.03, -1.55, 1.45, .92, -.18, 'earth'],
-    [2.64, -.03, .92, 1.30, .82, .38, 'moss'],
-    [2.38, -.03, -1.82, 1.05, .70, -.40, 'earth'],
+    [-2.35, -.03, 1.20, 1.45, .92, .12, 'moss'],
+    [-1.02, -.03, -1.42, 1.25, .78, -.22, 'earth'],
+    [1.92, -.03, 1.28, 1.10, .72, .24, 'moss'],
+    [2.16, -.03, -1.56, .95, .64, -.32, 'earth'],
   ];
 
   const textures = {
     moss: makeSoftPatchTexture(
-      'rgba(68,100,43,1)',
-      'rgba(96,125,58,.68)',
-      .30,
+      'rgba(130,171,86,1)',
+      'rgba(153,190,104,.55)',
+      .18,
     ),
     earth: makeSoftPatchTexture(
-      'rgba(104,84,58,1)',
-      'rgba(124,102,69,.62)',
-      .26,
+      'rgba(125,101,66,1)',
+      'rgba(140,118,81,.48)',
+      .16,
     ),
   };
 
@@ -233,7 +230,7 @@ function createSoftEdgeStones(group, materials, rand) {
   ];
 
   const material = materials.rock.clone();
-  material.color.setHex(0x9a8f7e);
+  material.color.setHex(0xa3947e);
   material.roughness = .96;
 
   positions.forEach(([x, z, scale, tilt], index) => {
@@ -312,23 +309,23 @@ function createStonePath(group, material, rand) {
 
 function createDoorFoundation(group, materials) {
   const baseMaterial = materials.stone.clone();
-  baseMaterial.color.setHex(0xa69a87);
+  baseMaterial.color.setHex(0xada08b);
   baseMaterial.roughness = .94;
 
   const base = new THREE.Mesh(
-    new THREE.BoxGeometry(2.55, .16, .76),
+    new THREE.BoxGeometry(2.65, .12, .82),
     baseMaterial,
   );
-  base.position.set(3.45, .07, -1.18);
+  base.position.set(3.45, .055, -1.18);
   base.castShadow = true;
   base.receiveShadow = true;
   group.add(base);
 
   const sideStoneData = [
-    [2.42, .18, -1.18, .34, .24, .34, .08],
-    [4.48, .18, -1.18, .38, .28, .36, -.06],
-    [2.72, .14, -.80, .32, .20, .26, .18],
-    [4.18, .14, -.82, .30, .19, .24, -.15],
+    [2.42, .16, -1.18, .34, .24, .34, .08],
+    [4.48, .16, -1.18, .38, .28, .36, -.06],
+    [2.72, .12, -.80, .32, .20, .26, .18],
+    [4.18, .12, -.82, .30, .19, .24, -.15],
   ];
 
   sideStoneData.forEach(([x, y, z, sx, sy, sz, rz]) => {
@@ -337,7 +334,7 @@ function createDoorFoundation(group, materials) {
       materials.rock.clone(),
     );
 
-    stone.material.color.setHex(0x958a79);
+    stone.material.color.setHex(0x988b78);
     stone.material.roughness = .97;
     stone.scale.set(sx, sy, sz);
     stone.position.set(x, y, z);
@@ -350,7 +347,7 @@ function createDoorFoundation(group, materials) {
 
 function createGeneratorFoundation(group, materials) {
   const foundationMaterial = materials.path.clone();
-  foundationMaterial.color.setHex(0xa99e8c);
+  foundationMaterial.color.setHex(0xb0a28d);
   foundationMaterial.roughness = .92;
 
   const ring = new THREE.Mesh(
@@ -363,7 +360,7 @@ function createGeneratorFoundation(group, materials) {
   group.add(ring);
 
   const plateMaterial = materials.stone.clone();
-  plateMaterial.color.setHex(0xb1a592);
+  plateMaterial.color.setHex(0xb6aa95);
   plateMaterial.roughness = .94;
 
   const plateData = [
@@ -402,9 +399,9 @@ function createFlowerPatch(rand, scale = 1) {
   });
 
   const flowerMaterials = [
-    new THREE.MeshStandardMaterial({ color: 0xf3ecd7, roughness: .95 }),
-    new THREE.MeshStandardMaterial({ color: 0xe3d5a7, roughness: .95 }),
-    new THREE.MeshStandardMaterial({ color: 0xdde7d5, roughness: .95 }),
+    new THREE.MeshStandardMaterial({ color: 0xf0ead8, roughness: .95 }),
+    new THREE.MeshStandardMaterial({ color: 0xe1d6a8, roughness: .95 }),
+    new THREE.MeshStandardMaterial({ color: 0xe1ead9, roughness: .95 }),
   ];
 
   for (let i = 0; i < 5; i += 1) {
@@ -442,7 +439,6 @@ export function createFloatingIsland(baseMaterials) {
   const island = new THREE.Group();
   const rand = seededRandom(29);
 
-  // Layered island instead of one textured tile slab.
   island.add(createIslandBody(materials));
   island.add(createGrassCap(materials));
 
@@ -454,7 +450,6 @@ export function createFloatingIsland(baseMaterials) {
 
   const flowerPositions = [
     [-2.30, -1.88, .66],
-    [.38, -1.96, .60],
     [2.62, 1.20, .56],
   ];
 
@@ -490,8 +485,6 @@ export function addCloudscape(scene, baseMaterials) {
     depthWrite: false,
   });
 
-  // Softer background: fewer, smaller clouds so they do not compete
-  // with the island silhouette.
   for (let i = 0; i < 22; i += 1) {
     const cloud = new THREE.Mesh(
       new THREE.SphereGeometry(.52 + rand() * .54, 18, 12),
@@ -522,7 +515,6 @@ export function addCloudscape(scene, baseMaterials) {
     blending: THREE.AdditiveBlending,
   });
 
-  // Smaller, more distant background islands.
   const distantData = [
     [-8.6, 1.2, -10.5, .76],
     [8.2, 2.0, -12.0, .82],

@@ -100,7 +100,7 @@ function recolorRock(root, materials, dark = false) {
     dark ? materials.rockDark : materials.rock
   ).clone();
 
-  replacement.color.setHex(dark ? 0x6f665b : 0x978b7b);
+  replacement.color.setHex(dark ? 0x6f665b : 0x9a8d79);
   replacement.roughness = .97;
   replacement.metalness = 0;
   replacement.bumpScale = dark ? .11 : .085;
@@ -124,11 +124,9 @@ function recolorFoliage(root, mode = 'green') {
 
     if (material.color) {
       if (mode === 'green') {
-        // Force all foliage into one coherent sage/olive palette.
-        material.color.setHex(0x6f8f55);
+        material.color.setHex(0x7ea85d);
       } else if (mode === 'light') {
-        // Replaces the loud red flower accents with muted warm cream.
-        material.color.setHex(0xd8d0a8);
+        material.color.setHex(0xdcd4b0);
       }
     }
 
@@ -238,7 +236,6 @@ function addSurfaceRocks(target, rocks, materials) {
   const placements = [
     [-3.00, .02, 1.58, .46, .3, false],
     [-2.48, .02, -1.88, .38, 1.4, true],
-    [-1.12, .02, 2.00, .36, 2.1, false],
     [2.38, .02, 1.62, .40, 2.8, true],
     [2.68, .02, -1.72, .38, 1.9, false],
   ];
@@ -260,11 +257,10 @@ function addSurfaceRocks(target, rocks, materials) {
 
 function addBushes(target, common, flowers) {
   const greenPlacements = [
-    [-3.02, .10, 1.18, .46, .4],
-    [-2.28, .10, 1.88, .42, 1.3],
-    [-1.22, .10, -1.86, .42, 2.1],
-    [1.92, .10, 1.76, .46, 2.8],
-    [2.48, .10, -1.64, .44, .2],
+    [-3.00, .10, 1.12, .40, .4],
+    [-2.20, .10, 1.86, .36, 1.3],
+    [1.96, .10, 1.70, .40, 2.8],
+    [2.44, .10, -1.58, .38, .2],
   ];
 
   greenPlacements.forEach(([x, y, z, size, yaw]) => {
@@ -276,10 +272,10 @@ function addBushes(target, common, flowers) {
     });
   });
 
-  // One restrained warm accent instead of several loud red bushes.
+  // Single subtle warm accent only.
   place(target, flowers, {
-    position: [.82, .10, -1.84],
-    size: .28,
+    position: [.88, .10, -1.82],
+    size: .20,
     rotation: [0, .8, 0],
     transform: (object) => recolorFoliage(object, 'light'),
   });
@@ -287,13 +283,11 @@ function addBushes(target, common, flowers) {
 
 function addGrass(target, tall, wispy) {
   const placements = [
-    [-3.10, .10, 1.84, .18, .2, 0],
-    [-2.28, .10, -1.88, .16, 1.8, 1],
-    [-.42, .10, 1.96, .17, 1.4, 0],
-    [1.18, .10, 1.90, .16, .9, 1],
-    [2.26, .10, -1.78, .17, 2.1, 0],
-    [2.98, .10, .58, .14, 1.6, 1],
-    [-3.06, .10, -.54, .14, .8, 0],
+    [-3.08, .10, 1.82, .15, .2, 0],
+    [-2.22, .10, -1.82, .13, 1.8, 1],
+    [1.16, .10, 1.86, .14, .9, 1],
+    [2.22, .10, -1.74, .14, 2.1, 0],
+    [2.94, .10, .56, .12, 1.6, 1],
   ];
 
   placements.forEach(([x, y, z, size, yaw, variant]) => {
@@ -309,9 +303,8 @@ function addGrass(target, tall, wispy) {
 
 function addAccentPlants(target, plant) {
   const placements = [
-    [-2.70, .10, 1.76, .26, .5],
-    [.10, .10, 1.82, .28, 1.2],
-    [2.16, .10, 1.34, .25, 2.5],
+    [-2.66, .10, 1.72, .23, .5],
+    [2.10, .10, 1.28, .22, 2.5],
   ];
 
   placements.forEach(([x, y, z, size, yaw]) => {
@@ -345,10 +338,7 @@ function addCredits(root) {
   ];
 }
 
-export async function addExternalNatureAssets(
-  scene,
-  materials,
-) {
+export async function addExternalNatureAssets(scene, materials) {
   const root = new THREE.Group();
   root.name = 'ExternalNatureAssets';
   addCredits(root);
