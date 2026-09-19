@@ -11,6 +11,7 @@ import {
   createFloatingIsland,
   addCloudscape,
 } from './environment/FloatingIsland.js';
+import { createCloudField } from './environment/CloudField.js';
 import {
   createEnvironmentMaterials,
 } from './environment/TextureFactory.js';
@@ -279,6 +280,9 @@ Object.assign(materials, detailedMaterials);
 
 scene.add(createFloatingIsland(materials));
 addCloudscape(scene, materials);
+
+const cloudField = createCloudField();
+scene.add(cloudField);
 
 const CORE_PLAY_SCALE = .72;
 
@@ -1376,6 +1380,7 @@ function render() {
   const delta = Math.min(clock.getDelta(), .033);
   const time = clock.elapsedTime;
 
+  cloudField.userData.update?.(time);
   updateManualMovement(delta);
   animateRobot(robot, time, {
     moving: moving || manual.moving,
