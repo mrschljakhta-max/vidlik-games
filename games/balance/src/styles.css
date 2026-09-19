@@ -87,6 +87,42 @@ select {
   font-size: 14px;
 }
 
+.controls-help {
+  position: absolute;
+  z-index: 20;
+  left: 50%;
+  top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  color: #b7c9d9;
+  font-size: 11px;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.controls-help span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.controls-help kbd {
+  min-width: 24px;
+  padding: 3px 6px;
+  border: 1px solid rgba(147, 214, 244, .20);
+  border-bottom-color: rgba(147, 214, 244, .34);
+  border-radius: 6px;
+  color: #effbff;
+  background: rgba(255, 255, 255, .06);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, .05);
+  font-size: 10px;
+  font-weight: 800;
+  text-align: center;
+}
+
 .mission {
   position: absolute;
   z-index: 20;
@@ -265,6 +301,17 @@ select {
   }
 
   .brand span {
+    display: none;
+  }
+
+  .controls-help {
+    top: 72px;
+    gap: 7px;
+    padding: 7px 9px;
+    font-size: 10px;
+  }
+
+  .controls-help span:nth-child(1) {
     display: none;
   }
 

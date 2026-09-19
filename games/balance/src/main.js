@@ -35,6 +35,11 @@ app.innerHTML = `
     </section>
   </header>
 
+  <div class="panel controls-help">
+    <span><kbd>WASD</kbd> / <kbd>←↑↓→</kbd> рух</span>
+    <span><kbd>SPACE</kbd> стрибок</span>
+  </div>
+
   <div id="scene" class="scene"></div>
 
   <section class="panel mission">
@@ -260,7 +265,31 @@ const interactables = [core, generator, exit];
 let phase = 'core';
 let moving = false;
 let powered = false;
+let doorOpen = false;
 let energyLoopStart = 0;
+
+const keys = new Set();
+const manualVelocity = new THREE.Vector3();
+const cameraForward = new THREE.Vector3();
+const cameraRight = new THREE.Vector3();
+const desiredMove = new THREE.Vector3();
+
+const manual = {
+  baseY: .90,
+  speed: 2.75,
+  jumpSpeed: 4.7,
+  gravity: 10.5,
+  verticalVelocity: 0,
+  grounded: true,
+  moving: false,
+};
+
+const islandBounds = {
+  minX: -3.55,
+  maxX: 3.60,
+  minZ: -2.35,
+  maxZ: 2.52,
+};
 
 function belongsTo(object, root) {
   let current = object;
@@ -283,6 +312,148 @@ function getLookQuaternion(from, to) {
   return new THREE.Quaternion().setFromEuler(
     new THREE.Euler(0, yaw, 0),
   );
+}
+
+function distanceXZ(a, b) {
+  return Math.hypot(a.x - b.x, a.z - b.z);
+}
+
+function canManualControl() {
+  return !moving && phase !== 'finishing' && phase !== 'done';
+}
+
+function isBlockedPosition(position) {
+  if (
+    position.x < islandBounds.minX ||
+    position.x > islandBounds.maxX ||
+    position.z < islandBounds.minZ ||
+    position.z > islandBounds.maxZ
+  ) {
+    return true;
+  }
+
+  const generatorCenter = generator.position;
+  if (distanceXZ(position, generatorCenter) < 1.55) {
+    return true;
+  }
+
+  const pedestalCenter = pedestal.position;
+  if (distanceXZ(position, pedestalCenter) < .95) {
+    return true;
+  }
+
+  const doorZ = door.position.z;
+  const nearDoorPlane = Math.abs(position.z - doorZ) < .64;
+
+  if (nearDoorPlane) {
+    const leftPostX = door.position.x - 1.20;
+    const rightPostX = door.position.x + 1.20;
+
+    if (Math.abs(position.x - leftPostX) < .56) return true;
+    if (Math.abs(position.x - rightPostX) < .56) return true;
+
+    if (!doorOpen && Math.abs(position.x - door.position.x) < 1.12) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function updateManualMovement(delta) {
+  if (!canManualControl()) {
+    manual.moving = false;
+    return;
+  }
+
+  const forwardInput =
+    (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) -
+    (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0);
+
+  const sideInput =
+    (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) -
+    (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0);
+
+  camera.getWorldDirection(cameraForward);
+  cameraForward.y = 0;
+  cameraForward.normalize();
+
+  cameraRight.crossVectors(cameraForward, camera.up).normalize();
+
+  desiredMove
+    .set(0, 0, 0)
+    .addScaledVector(cameraForward, forwardInput)
+    .addScaledVector(cameraRight, sideInput);
+
+  if (desiredMove.lengthSq() > 1) {
+    desiredMove.normalize();
+  }
+
+  desiredMove.multiplyScalar(manual.speed);
+
+  manualVelocity.x = THREE.MathUtils.damp(
+    manualVelocity.x,
+    desiredMove.x,
+    12,
+    delta,
+  );
+  manualVelocity.z = THREE.MathUtils.damp(
+    manualVelocity.z,
+    desiredMove.z,
+    12,
+    delta,
+  );
+
+  const moveX = robot.position.clone();
+  moveX.x += manualVelocity.x * delta;
+
+  if (!isBlockedPosition(moveX)) {
+    robot.position.x = moveX.x;
+  } else {
+    manualVelocity.x = 0;
+  }
+
+  const moveZ = robot.position.clone();
+  moveZ.z += manualVelocity.z * delta;
+
+  if (!isBlockedPosition(moveZ)) {
+    robot.position.z = moveZ.z;
+  } else {
+    manualVelocity.z = 0;
+  }
+
+  const horizontalSpeed = Math.hypot(manualVelocity.x, manualVelocity.z);
+
+  if (horizontalSpeed > .08) {
+    const lookTarget = robot.position.clone().add(
+      new THREE.Vector3(manualVelocity.x, 0, manualVelocity.z),
+    );
+    const targetQuaternion = getLookQuaternion(robot.position, lookTarget);
+    const turnAmount = 1 - Math.exp(-11 * delta);
+    robot.quaternion.slerp(targetQuaternion, turnAmount);
+  }
+
+  if (!manual.grounded || manual.verticalVelocity > 0) {
+    robot.position.y += manual.verticalVelocity * delta;
+    manual.verticalVelocity -= manual.gravity * delta;
+
+    if (robot.position.y <= manual.baseY) {
+      robot.position.y = manual.baseY;
+      manual.verticalVelocity = 0;
+      manual.grounded = true;
+    }
+  } else {
+    robot.position.y = manual.baseY;
+  }
+
+  manual.moving = horizontalSpeed > .08 || !manual.grounded;
+
+  if (
+    phase === 'exit' &&
+    distanceXZ(robot.position, path.exit) < .62
+  ) {
+    completeLevel();
+  }
 }
 
 function flyTo(end, duration = 700, done) {
@@ -341,10 +512,7 @@ function flyRoute(points, durations, done) {
 function pickCore() {
   if (phase !== 'core' || moving) return;
 
-  title.textContent = 'Забираємо ядро';
-  text.textContent = 'Робот підлітає до енергетичного ядра.';
-
-  flyTo(path.corePickup, 680, () => {
+  const collect = () => {
     core.removeFromParent();
     robot.userData.visual.add(core);
     core.position.set(0, -.12, 1.34);
@@ -363,7 +531,16 @@ function pickCore() {
     coreTag.classList.remove('world-tag--active');
     coreTag.classList.add('world-tag--hidden');
     generatorTag.classList.add('world-tag--active');
-  });
+  };
+
+  if (distanceXZ(robot.position, path.corePickup) < 1.05) {
+    collect();
+    return;
+  }
+
+  title.textContent = 'Забираємо ядро';
+  text.textContent = 'Робот підлітає до енергетичного ядра.';
+  flyTo(path.corePickup, 680, collect);
 }
 
 function animateCoreIntoGenerator(done) {
@@ -452,6 +629,7 @@ function openDoor() {
       return;
     }
 
+    doorOpen = true;
     phase = 'exit';
     exit.visible = true;
 
@@ -468,10 +646,7 @@ function openDoor() {
 function powerGenerator() {
   if (phase !== 'generator' || moving) return;
 
-  title.textContent = 'Підключаємо ядро';
-  text.textContent = 'Робот займає безпечну позицію біля генератора.';
-
-  flyTo(path.generatorApproach, 780, () => {
+  const activate = () => {
     animateCoreIntoGenerator(() => {
       powered = true;
 
@@ -491,11 +666,43 @@ function powerGenerator() {
 
       energizeDoor(openDoor);
     });
-  });
+  };
+
+  if (distanceXZ(robot.position, path.generatorApproach) < .95) {
+    activate();
+    return;
+  }
+
+  title.textContent = 'Підключаємо ядро';
+  text.textContent = 'Робот займає безпечну позицію біля генератора.';
+  flyTo(path.generatorApproach, 780, activate);
+}
+
+function completeLevel() {
+  if (phase === 'done') return;
+
+  phase = 'done';
+  moving = false;
+  manualVelocity.set(0, 0, 0);
+  manual.verticalVelocity = 0;
+  manual.grounded = true;
+  robot.position.y = manual.baseY;
+
+  status.textContent = 'Завершено';
+  title.textContent = 'Рівень завершено';
+  text.innerHTML = `<b>${level01.completion.equation}</b> · ${level01.completion.message}`;
+
+  setRobotExpression(robot, 'happy');
+  complete.classList.add('show');
 }
 
 function finishLevel() {
   if (phase !== 'exit' || moving) return;
+
+  if (distanceXZ(robot.position, path.exit) < .82) {
+    completeLevel();
+    return;
+  }
 
   phase = 'finishing';
   title.textContent = 'До виходу';
@@ -509,15 +716,7 @@ function finishLevel() {
       path.exit,
     ],
     [600, 650, 480, 380],
-    () => {
-      phase = 'done';
-      status.textContent = 'Завершено';
-      title.textContent = 'Рівень завершено';
-      text.innerHTML = `<b>${level01.completion.equation}</b> · ${level01.completion.message}`;
-
-      setRobotExpression(robot, 'happy');
-      complete.classList.add('show');
-    },
+    completeLevel,
   );
 }
 
@@ -548,6 +747,44 @@ renderer.domElement.addEventListener('pointermove', (event) => {
     (phase === 'exit' && hit && belongsTo(hit, exit));
 
   renderer.domElement.style.cursor = actionable ? 'pointer' : 'default';
+});
+
+const keyboardCodes = new Set([
+  'KeyW',
+  'KeyA',
+  'KeyS',
+  'KeyD',
+  'ArrowUp',
+  'ArrowDown',
+  'ArrowLeft',
+  'ArrowRight',
+  'Space',
+]);
+
+window.addEventListener('keydown', (event) => {
+  if (!keyboardCodes.has(event.code)) return;
+
+  event.preventDefault();
+
+  if (event.code === 'Space') {
+    if (canManualControl() && manual.grounded) {
+      manual.verticalVelocity = manual.jumpSpeed;
+      manual.grounded = false;
+    }
+    return;
+  }
+
+  keys.add(event.code);
+});
+
+window.addEventListener('keyup', (event) => {
+  if (!keyboardCodes.has(event.code)) return;
+  keys.delete(event.code);
+});
+
+window.addEventListener('blur', () => {
+  keys.clear();
+  manualVelocity.set(0, 0, 0);
 });
 
 renderer.domElement.addEventListener('pointerdown', (event) => {
@@ -592,9 +829,11 @@ const clock = new THREE.Clock();
 function render() {
   requestAnimationFrame(render);
 
-  const time = clock.getElapsedTime();
+  const delta = Math.min(clock.getDelta(), .033);
+  const time = clock.elapsedTime;
 
-  animateRobot(robot, time, moving);
+  updateManualMovement(delta);
+  animateRobot(robot, time, moving || manual.moving);
 
   if (core.visible) {
     core.userData.wire.rotation.x += .006;
