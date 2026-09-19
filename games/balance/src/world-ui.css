@@ -1,0 +1,296 @@
+/* BALANCE — diegetic world UI pass */
+.world-tag {
+  --accent: 103, 231, 255;
+  min-width: 0;
+  width: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  backdrop-filter: none;
+  box-shadow: none;
+  filter: drop-shadow(0 7px 12px rgba(0, 0, 0, .28));
+  transform: translate(-50%, calc(-100% - 12px));
+  overflow: visible;
+}
+
+.world-tag::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -14px;
+  width: 1px;
+  height: 13px;
+  background: linear-gradient(to bottom, rgba(var(--accent), .72), transparent);
+}
+
+.world-tag strong {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 56px;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid rgba(var(--accent), .58);
+  border-radius: 15px;
+  color: rgb(var(--accent));
+  background:
+    radial-gradient(circle at 50% 20%, rgba(var(--accent), .18), transparent 58%),
+    linear-gradient(180deg, rgba(9, 26, 42, .92), rgba(4, 13, 25, .94));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.09),
+    inset 0 0 20px rgba(var(--accent), .07),
+    0 0 0 3px rgba(5, 18, 30, .48),
+    0 0 24px rgba(var(--accent), .18);
+  font-size: 19px;
+  font-weight: 950;
+  letter-spacing: .02em;
+  line-height: 1;
+}
+
+.world-tag strong::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(var(--accent), .12);
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+.world-tag span {
+  display: none;
+}
+
+.world-tag--cyan { --accent: 84, 226, 255; }
+.world-tag--negative { --accent: 238, 91, 255; }
+.world-tag--overload { --accent: 255, 151, 58; }
+.world-tag--balanced { --accent: 105, 255, 200; }
+
+.world-tag--active {
+  animation: none;
+}
+
+.world-tag--active strong {
+  animation: worldBadgePulse 1.55s ease-in-out infinite;
+}
+
+.world-tag--negative.world-tag--active {
+  animation: none;
+}
+
+.world-tag--negative.world-tag--active strong {
+  animation: worldBadgePulse 1.55s ease-in-out infinite;
+}
+
+.world-tag--installed {
+  min-width: 0;
+  opacity: .78;
+}
+
+.world-tag--installed strong {
+  height: 40px;
+  min-width: 48px;
+  font-size: 15px;
+}
+
+#generator-tag {
+  --accent: 84, 226, 255;
+  transform: translate(-50%, calc(-100% - 20px));
+}
+
+#generator-tag strong {
+  min-width: 118px;
+  height: 52px;
+  padding: 0 17px 12px;
+  border-radius: 18px 18px 13px 13px;
+  font-size: 20px;
+}
+
+#generator-tag strong::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 8px;
+  height: 4px;
+  border-radius: 999px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgb(var(--accent)) 0 15px,
+      transparent 15px 19px
+    );
+  opacity: .88;
+  box-shadow: 0 0 10px rgba(var(--accent), .35);
+}
+
+#generator-tag.world-tag--overload strong {
+  animation: overloadPulse .72s ease-in-out infinite;
+}
+
+#generator-tag.world-tag--balanced strong {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.10),
+    inset 0 0 24px rgba(var(--accent), .10),
+    0 0 0 3px rgba(5, 18, 30, .42),
+    0 0 34px rgba(var(--accent), .28);
+}
+
+#door-tag {
+  --accent: 255, 184, 72;
+  transform: translate(-50%, calc(-100% - 16px));
+}
+
+#door-tag strong {
+  min-width: 104px;
+  height: 43px;
+  border-radius: 14px;
+  font-size: 12px;
+  letter-spacing: .12em;
+}
+
+#door-tag strong::after {
+  content: '◆';
+  margin-left: 8px;
+  color: rgb(var(--accent));
+  font-size: 10px;
+  filter: drop-shadow(0 0 5px rgba(var(--accent), .65));
+}
+
+#door-tag.world-tag--cyan {
+  --accent: 105, 255, 200;
+}
+
+.interaction-prompt.panel {
+  gap: 12px;
+  padding: 8px 14px 8px 8px;
+  border: 1px solid rgba(102, 232, 255, .30);
+  border-radius: 999px;
+  background: rgba(4, 16, 28, .82);
+  box-shadow:
+    0 14px 38px rgba(0,0,0,.28),
+    0 0 24px rgba(74, 222, 255, .10),
+    inset 0 1px 0 rgba(255,255,255,.06);
+  backdrop-filter: blur(16px);
+}
+
+.interaction-prompt kbd {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 58px;
+  height: 34px;
+  padding: 0 9px;
+  border: 1px solid rgba(111, 236, 255, .58);
+  border-radius: 999px;
+  color: #eaffff;
+  background: radial-gradient(circle, rgba(80, 224, 255, .20), rgba(80, 224, 255, .06));
+  box-shadow:
+    inset 0 0 12px rgba(80, 224, 255, .12),
+    0 0 15px rgba(80, 224, 255, .16);
+  font-size: 10px;
+  letter-spacing: .08em;
+}
+
+.interaction-prompt.show kbd {
+  animation: enterPulse 1.25s ease-in-out infinite;
+}
+
+.interaction-prompt span {
+  color: #e6f7ff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .01em;
+}
+
+.equation-trail {
+  gap: 9px;
+  border-top-color: rgba(160, 210, 239, .08);
+}
+
+.equation-trail span,
+.equation-trail strong {
+  position: relative;
+  min-width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0 9px;
+  border: 1px solid rgba(139, 213, 240, .16);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.025));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+.equation-trail span.current {
+  color: #dffcff;
+  border-color: rgba(90, 229, 255, .48);
+  background: radial-gradient(circle, rgba(76,220,255,.18), rgba(76,220,255,.05));
+  box-shadow: 0 0 18px rgba(76,220,255,.12);
+}
+
+.equation-trail strong {
+  color: #91ffd8;
+  border-color: rgba(105,255,200,.28);
+  background: radial-gradient(circle, rgba(105,255,200,.14), rgba(105,255,200,.04));
+}
+
+.equation-trail i {
+  color: rgba(164, 203, 221, .56);
+  font-size: 12px;
+}
+
+@keyframes worldBadgePulse {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.09),
+      inset 0 0 20px rgba(var(--accent), .07),
+      0 0 0 3px rgba(5, 18, 30, .48),
+      0 0 18px rgba(var(--accent), .12);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.035);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.11),
+      inset 0 0 24px rgba(var(--accent), .12),
+      0 0 0 3px rgba(5, 18, 30, .42),
+      0 0 30px rgba(var(--accent), .27);
+  }
+}
+
+@keyframes overloadPulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.04); filter: brightness(1.25); }
+}
+
+@keyframes enterPulse {
+  0%, 100% { box-shadow: inset 0 0 12px rgba(80,224,255,.12), 0 0 12px rgba(80,224,255,.12); }
+  50% { box-shadow: inset 0 0 16px rgba(80,224,255,.20), 0 0 24px rgba(80,224,255,.28); }
+}
+
+@media (max-width: 700px) {
+  .world-tag strong {
+    min-width: 48px;
+    height: 42px;
+    padding: 0 11px;
+    font-size: 16px;
+  }
+
+  #generator-tag strong {
+    min-width: 100px;
+    height: 48px;
+    font-size: 17px;
+  }
+
+  #door-tag strong {
+    min-width: 88px;
+    height: 39px;
+    font-size: 10px;
+  }
+
+  .interaction-prompt.panel {
+    bottom: 66px;
+    padding: 7px 11px 7px 7px;
+  }
+}
