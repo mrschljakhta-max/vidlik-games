@@ -122,19 +122,13 @@ function createGrassTexture() {
   return texture;
 }
 
-function createSmoothGrassMaterial(materials) {
-  const grass = materials.grass.clone();
-
-  grass.map = createGrassTexture();
-  grass.bumpMap = null;
-  grass.roughnessMap = null;
-  grass.color.setHex(0xffffff);
-  grass.roughness = .92;
-  grass.metalness = 0;
-  grass.side = THREE.DoubleSide;
-  grass.needsUpdate = true;
-
-  return grass;
+function createSmoothGrassMaterial() {
+  return new THREE.MeshStandardMaterial({
+    color: 0x76ad4f,
+    roughness: .95,
+    metalness: 0,
+    side: THREE.DoubleSide,
+  });
 }
 
 function createIslandBody(materials) {
@@ -456,16 +450,16 @@ function createStonePath(group, material, rand) {
   // the generator and then the gate. The route is intentionally curved
   // and irregular so it reads as a path, not a tiled grid.
   const dirtMaterial = new THREE.MeshBasicMaterial({
-    color: 0x5f513f,
+    color: 0x84745d,
     transparent: true,
-    opacity: .28,
+    opacity: .16,
     depthWrite: false,
     polygonOffset: true,
     polygonOffsetFactor: -2,
   });
 
   const pathMaterial = material.clone();
-  pathMaterial.color.setHex(0xb5aa96);
+  pathMaterial.color.setHex(0xcfc3aa);
   pathMaterial.roughness = .96;
   pathMaterial.metalness = 0;
 
@@ -618,6 +612,44 @@ function createRuinClusters(group, materials, rand) {
   });
 }
 
+function createEdgeGrassTufts(group) {
+  const bladeMaterial = new THREE.MeshStandardMaterial({
+    color: 0x6fa34a,
+    roughness: 1,
+    side: THREE.DoubleSide,
+  });
+
+  const positions = [
+    [-3.28, 1.72, .16], [-2.74, 2.08, -.18], [-2.08, 2.24, .10],
+    [-1.28, 2.28, -.12], [-.42, 2.34, .18], [.52, 2.30, -.16],
+    [1.44, 2.20, .12], [2.30, 1.96, -.14], [3.00, 1.52, .18],
+    [3.26, .78, -.12], [3.26, -.16, .10], [3.06, -1.04, -.16],
+    [2.50, -1.82, .16], [1.72, -2.16, -.12], [.76, -2.28, .14],
+    [-.26, -2.30, -.18], [-1.28, -2.28, .12], [-2.18, -2.12, -.10],
+    [-2.92, -1.66, .14], [-3.32, -.84, -.12], [-3.38, .10, .10],
+    [-3.38, .92, -.14],
+  ];
+
+  positions.forEach(([x, z, rot], index) => {
+    const tuft = new THREE.Group();
+
+    for (let i = 0; i < 4; i += 1) {
+      const blade = new THREE.Mesh(
+        new THREE.PlaneGeometry(.12, .34 + (i % 2) * .08),
+        bladeMaterial,
+      );
+      blade.position.y = .17;
+      blade.rotation.y = (i / 4) * Math.PI + rot;
+      blade.rotation.z = (i - 1.5) * .08;
+      tuft.add(blade);
+    }
+
+    tuft.position.set(x, .13, z);
+    tuft.rotation.y = rot + (index % 3) * .18;
+    group.add(tuft);
+  });
+}
+
 function createDoorFoundation(group, materials) {
   const baseMaterial = materials.stone.clone();
   baseMaterial.color.setHex(0xa69a87);
@@ -758,6 +790,7 @@ export function createFloatingIsland(baseMaterials) {
 
   createSoftEdgeStones(island, materials, rand);
   createStonePath(island, materials.path, rand);
+  createEdgeGrassTufts(island);
   createDoorFoundation(island, materials);
   createGeneratorFoundation(island, materials);
 

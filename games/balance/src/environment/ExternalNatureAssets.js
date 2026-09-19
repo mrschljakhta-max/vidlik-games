@@ -132,6 +132,10 @@ function recolorFoliage(root, mode = 'green') {
       }
     }
 
+    material.map = null;
+    material.alphaMap = null;
+    material.transparent = false;
+    material.opacity = 1;
     material.roughness = Math.max(material.roughness ?? .8, .90);
     material.metalness = 0;
     material.needsUpdate = true;
