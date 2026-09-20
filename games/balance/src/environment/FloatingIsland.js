@@ -124,8 +124,9 @@ function createGrassTexture() {
 
 function createSmoothGrassMaterial() {
   return new THREE.MeshStandardMaterial({
-    color: 0x76ad4f,
-    roughness: .95,
+    map: createGrassTexture(),
+    color: 0xffffff,
+    roughness: .96,
     metalness: 0,
     side: THREE.DoubleSide,
   });
@@ -729,6 +730,334 @@ function createFlowerPatch(rand, scale = 1) {
   return group;
 }
 
+
+function createShrubCluster(rand, scale = 1, hue = 'green') {
+  const group = new THREE.Group();
+
+  const colors = hue === 'light'
+    ? [0x7fb458, 0x91c968, 0x6fa54a]
+    : [0x4f873d, 0x639b48, 0x78ad55];
+
+  const materials = colors.map((color) => new THREE.MeshStandardMaterial({
+    color,
+    roughness: 1,
+    metalness: 0,
+  }));
+
+  const lobes = 7;
+
+  for (let i = 0; i < lobes; i += 1) {
+    const radius = (.18 + rand() * .10) * scale;
+    const leafMass = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(radius, 1),
+      materials[i % materials.length],
+    );
+
+    const angle = (i / lobes) * Math.PI * 2 + rand() * .35;
+    const ring = i === 0 ? 0 : (.18 + rand() * .12) * scale;
+
+    leafMass.position.set(
+      Math.cos(angle) * ring,
+      (.18 + rand() * .18) * scale,
+      Math.sin(angle) * ring,
+    );
+
+    leafMass.scale.set(
+      1.0 + rand() * .30,
+      .78 + rand() * .28,
+      1.0 + rand() * .30,
+    );
+
+    leafMass.rotation.set(
+      rand() * .28,
+      rand() * Math.PI,
+      rand() * .22,
+    );
+
+    leafMass.castShadow = true;
+    leafMass.receiveShadow = true;
+    group.add(leafMass);
+  }
+
+  return group;
+}
+
+function createGrassCluster(rand, scale = 1) {
+  const group = new THREE.Group();
+
+  const greens = [
+    new THREE.MeshStandardMaterial({ color: 0x6ca34a, roughness: 1, side: THREE.DoubleSide }),
+    new THREE.MeshStandardMaterial({ color: 0x87b85b, roughness: 1, side: THREE.DoubleSide }),
+  ];
+
+  for (let i = 0; i < 7; i += 1) {
+    const blade = new THREE.Mesh(
+      new THREE.ConeGeometry(.035 * scale, (.28 + rand() * .18) * scale, 5),
+      greens[i % greens.length],
+    );
+
+    blade.position.set(
+      (rand() - .5) * .24 * scale,
+      (.14 + rand() * .08) * scale,
+      (rand() - .5) * .24 * scale,
+    );
+
+    blade.rotation.z = (rand() - .5) * .22;
+    blade.rotation.x = (rand() - .5) * .12;
+    blade.castShadow = true;
+    group.add(blade);
+  }
+
+  return group;
+}
+
+function addHeroStonePath(group, materials, rand) {
+  const stoneMaterial = materials.stone.clone();
+  stoneMaterial.color.setHex(0xb9ad94);
+  stoneMaterial.roughness = .98;
+  stoneMaterial.metalness = 0;
+
+  const path = [
+    // Core / robot side -> generator.
+    [-2.72, .21, .34, .34, -.10],
+    [-2.24, .21, .29, .38,  .08],
+    [-1.74, .21, .25, .36, -.05],
+    [-1.24, .21, .24, .39,  .09],
+    [-.72,  .21, .28, .37, -.06],
+    [-.22,  .21, .42, .38,  .06],
+    [.16,   .21, .72, .35,  .12],
+
+    // Around the generator toward the gate.
+    [.52,   .21, 1.12, .33,  .18],
+    [1.02,  .21, 1.42, .34,  .08],
+    [1.56,  .21, 1.34, .35, -.10],
+    [2.02,  .21, 1.02, .34, -.22],
+    [2.38,  .21, .58, .33, -.34],
+    [2.68,  .21, .12, .32, -.40],
+    [2.92,  .21,-.36, .31, -.46],
+    [3.08,  .21,-.78, .30, -.48],
+  ];
+
+  path.forEach(([x, y, z, scale, yaw], index) => {
+    const stone = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(1, 1),
+      stoneMaterial,
+    );
+
+    stone.scale.set(
+      scale * (1.18 + (index % 3) * .06),
+      .055 + (index % 2) * .012,
+      scale * (.76 + (index % 2) * .09),
+    );
+
+    stone.position.set(
+      x + (rand() - .5) * .035,
+      y,
+      z + (rand() - .5) * .030,
+    );
+
+    stone.rotation.set(
+      (rand() - .5) * .03,
+      yaw + (rand() - .5) * .09,
+      (rand() - .5) * .025,
+    );
+
+    stone.castShadow = true;
+    stone.receiveShadow = true;
+    group.add(stone);
+  });
+}
+
+function addLushBorder(group, materials, rand) {
+  const bushes = [
+    [-3.24,  1.54, .72], [-2.78,  2.02, .62], [-2.12, 2.22, .56],
+    [-1.35,  2.28, .52], [-.48,  2.31, .50], [.46, 2.29, .50],
+    [1.36,   2.20, .54], [2.18,  2.00, .62], [2.88, 1.56, .66],
+    [3.24,    .86, .58], [3.28,  -.02, .54], [3.10,-.88, .58],
+    [2.68,  -1.62, .66], [1.96, -2.02, .62], [1.08,-2.22, .54],
+    [.10,   -2.30, .50], [-.90,-2.29, .52], [-1.84,-2.18, .58],
+    [-2.62, -1.92, .64], [-3.12,-1.30, .60], [-3.38,-.48, .54],
+    [-3.42,   .42, .56],
+  ];
+
+  bushes.forEach(([x, z, scale], index) => {
+    const bush = createShrubCluster(
+      rand,
+      scale,
+      index % 4 === 0 ? 'light' : 'green',
+    );
+    bush.position.set(x, .14, z);
+    bush.rotation.y = rand() * Math.PI * 2;
+    group.add(bush);
+
+    if (index % 2 === 0) {
+      const grass = createGrassCluster(rand, scale * .86);
+      grass.position.set(
+        x + (rand() - .5) * .30,
+        .13,
+        z + (rand() - .5) * .30,
+      );
+      group.add(grass);
+    }
+  });
+
+  const interiorGrass = [
+    [-2.72, 1.12, .74], [-2.36,-1.34,.68], [-1.68,1.72,.60],
+    [-1.28,-1.62,.62], [-.55,1.82,.58], [.20,-1.60,.58],
+    [.84,1.80,.56], [1.58,-1.55,.62], [2.18,1.48,.60],
+    [2.48,-1.26,.62],
+  ];
+
+  interiorGrass.forEach(([x, z, scale]) => {
+    const grass = createGrassCluster(rand, scale);
+    grass.position.set(x, .13, z);
+    grass.rotation.y = rand() * Math.PI * 2;
+    group.add(grass);
+  });
+}
+
+function addHangingGreenery(group, rand) {
+  const leafMaterials = [
+    new THREE.MeshStandardMaterial({ color: 0x4f8f3b, roughness: 1 }),
+    new THREE.MeshStandardMaterial({ color: 0x6da34b, roughness: 1 }),
+  ];
+
+  const anchors = [
+    [-3.42, 1.62, .92], [-3.54, .80, .72], [-3.50,-.86,.84],
+    [-2.86,-1.92,.96], [-1.82,-2.25,.72], [-.58,-2.36,.88],
+    [.72,-2.34,.78], [1.88,-2.12,.92], [2.82,-1.66,.82],
+    [3.30,-.84,.70], [3.36,.72,.76], [2.88,1.62,.88],
+  ];
+
+  anchors.forEach(([x, z, length], index) => {
+    const vine = new THREE.Group();
+    const pieces = 5 + (index % 3);
+
+    for (let i = 0; i < pieces; i += 1) {
+      const leaf = new THREE.Mesh(
+        new THREE.SphereGeometry(.08 + (i % 2) * .012, 7, 5),
+        leafMaterials[i % leafMaterials.length],
+      );
+
+      leaf.scale.set(1.0, .42, .72);
+      leaf.position.set(
+        Math.sin(i * 1.35) * .075,
+        -i * (length / pieces),
+        Math.cos(i * 1.1) * .045,
+      );
+      leaf.rotation.z = (i % 2 ? .55 : -.55);
+      leaf.castShadow = true;
+      vine.add(leaf);
+    }
+
+    vine.position.set(x, .05, z);
+    vine.rotation.y = rand() * Math.PI * 2;
+    group.add(vine);
+  });
+}
+
+function addHeroRockAccents(group, materials, rand) {
+  const rockMaterial = materials.rock.clone();
+  rockMaterial.color.setHex(0x8f8576);
+  rockMaterial.roughness = .98;
+
+  const rocks = [
+    [-3.02, .18, 1.10, .36], [-2.56,.18,-1.55,.30],
+    [-1.65,.18,1.90,.28], [2.52,.18,1.35,.34],
+    [2.70,.18,-1.42,.31], [1.92,.18,-1.76,.28],
+  ];
+
+  rocks.forEach(([x, y, z, scale], index) => {
+    const rock = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(1, 1),
+      rockMaterial,
+    );
+
+    rock.scale.set(
+      scale * 1.15,
+      scale * .68,
+      scale,
+    );
+    rock.position.set(x, y, z);
+    rock.rotation.set(
+      rand() * .12,
+      index * .72 + rand() * .30,
+      (rand() - .5) * .12,
+    );
+    rock.castShadow = true;
+    rock.receiveShadow = true;
+    group.add(rock);
+  });
+}
+
+function addGateGreenery(group, rand) {
+  const groundPlacements = [
+    [2.58, -.92, .52],
+    [2.72, -.48, .46],
+    [2.52, -.10, .42],
+    [2.94, -1.62, .48],
+  ];
+
+  groundPlacements.forEach(([x, z, scale]) => {
+    const bush = createShrubCluster(rand, scale, 'green');
+    bush.position.set(x, .14, z);
+    group.add(bush);
+  });
+
+  // Green crown and ivy around the door frame.
+  const crownPlacements = [
+    [2.74, 2.76, -1.16, .38],
+    [3.16, 2.90, -1.16, .42],
+    [3.72, 2.88, -1.16, .42],
+    [4.10, 2.72, -1.16, .36],
+    [2.58, 2.12, -1.12, .28],
+    [4.26, 2.08, -1.12, .28],
+  ];
+
+  crownPlacements.forEach(([x, y, z, scale], index) => {
+    const bush = createShrubCluster(
+      rand,
+      scale,
+      index % 3 === 0 ? 'light' : 'green',
+    );
+    bush.position.set(x, y, z);
+    group.add(bush);
+  });
+
+  const ivyMaterial = new THREE.MeshStandardMaterial({
+    color: 0x5c963f,
+    roughness: 1,
+  });
+
+  [
+    [2.66, 2.62, -1.05, .90],
+    [4.18, 2.64, -1.05, .78],
+    [3.98, 2.76, -1.05, .56],
+  ].forEach(([x, y, z, length], vineIndex) => {
+    const vine = new THREE.Group();
+    const pieces = 7;
+
+    for (let i = 0; i < pieces; i += 1) {
+      const leaf = new THREE.Mesh(
+        new THREE.SphereGeometry(.075, 7, 5),
+        ivyMaterial,
+      );
+
+      leaf.scale.set(1.0, .42, .68);
+      leaf.position.set(
+        Math.sin(i * 1.25 + vineIndex) * .07,
+        -i * (length / pieces),
+        0,
+      );
+      leaf.rotation.z = i % 2 ? .55 : -.55;
+      vine.add(leaf);
+    }
+
+    vine.position.set(x, y, z);
+    group.add(vine);
+  });
+}
+
 export function createFloatingIsland(baseMaterials) {
   const materials = createEnvironmentMaterials(baseMaterials);
   const island = new THREE.Group();
@@ -742,6 +1071,11 @@ export function createFloatingIsland(baseMaterials) {
 
   createSoftEdgeStones(island, materials, rand);
   createStonePath(island, materials.path, rand);
+  addHeroStonePath(island, materials, rand);
+  addHeroRockAccents(island, materials, rand);
+  addLushBorder(island, materials, rand);
+  addHangingGreenery(island, rand);
+  addGateGreenery(island, rand);
   createDoorFoundation(island, materials);
   createGeneratorFoundation(island, materials);
 
@@ -777,79 +1111,7 @@ export function createFloatingIsland(baseMaterials) {
   return island;
 }
 
-export function addCloudscape(scene, baseMaterials) {
-  const materials = createEnvironmentMaterials(baseMaterials);
-
-  // Clouds are handled by CloudField.js.
-  // This function now keeps only the distant floating islands/waterfalls.
-  const waterfallMaterial = new THREE.MeshBasicMaterial({
-    color: 0x83e5ff,
-    transparent: true,
-    opacity: .28,
-    side: THREE.DoubleSide,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-  });
-
-  // Smaller, more distant background islands.
-  const distantData = [
-    [-8.6, 1.2, -10.5, .76],
-    [8.2, 2.0, -12.0, .82],
-    [-11.5, 3.8, -17.0, .62],
-    [10.8, 4.2, -18.0, .68],
-  ];
-
-  distantData.forEach(([x, y, z, scale], index) => {
-    const group = new THREE.Group();
-
-    const mainRock = new THREE.Mesh(
-      new THREE.DodecahedronGeometry(1, 1),
-      index % 2 ? materials.rock : materials.rockDark,
-    );
-
-    mainRock.scale.set(
-      1.05 * scale,
-      1.65 * scale,
-      .92 * scale,
-    );
-
-    mainRock.position.y = -1.05 * scale;
-    mainRock.rotation.set(.08, index * .52, -.04);
-
-    const cap = new THREE.Mesh(
-      new THREE.SphereGeometry(1, 14, 9),
-      createSmoothGrassMaterial(materials),
-    );
-
-    cap.scale.set(
-      1.08 * scale,
-      .14 * scale,
-      .92 * scale,
-    );
-    cap.position.y = .16 * scale;
-
-    group.add(mainRock, cap);
-
-    if (index < 2) {
-      const waterfall = new THREE.Mesh(
-        new THREE.PlaneGeometry(
-          .14 * scale,
-          2.20 * scale,
-        ),
-        waterfallMaterial,
-      );
-
-      waterfall.position.set(
-        .30 * scale,
-        -.95 * scale,
-        .76 * scale,
-      );
-
-      group.add(waterfall);
-    }
-
-    group.position.set(x, y, z);
-    group.rotation.y = index % 2 ? -.24 : .22;
-    scene.add(group);
-  });
+export function addCloudscape() {
+  // Background floating rocks were intentionally removed.
+  // CloudField.js now owns the sky so nothing hangs above the play area.
 }
