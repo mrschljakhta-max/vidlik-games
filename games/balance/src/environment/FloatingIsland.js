@@ -805,8 +805,8 @@ function createShrubCluster(rand, scale = 1, hue = 'green') {
   const group = new THREE.Group();
 
   const colors = hue === 'light'
-    ? [0x7fb458, 0x91c968, 0x6fa54a]
-    : [0x4f873d, 0x639b48, 0x78ad55];
+    ? [0x6fa14a, 0x7fb554, 0x5f913f]
+    : [0x3f7434, 0x4f8539, 0x5e9542];
 
   const materials = colors.map((color) => new THREE.MeshStandardMaterial({
     color,
@@ -814,34 +814,34 @@ function createShrubCluster(rand, scale = 1, hue = 'green') {
     metalness: 0,
   }));
 
-  const lobes = 7;
+  const lobes = 9;
 
   for (let i = 0; i < lobes; i += 1) {
-    const radius = (.18 + rand() * .10) * scale;
+    const radius = (.11 + rand() * .055) * scale;
     const leafMass = new THREE.Mesh(
       new THREE.IcosahedronGeometry(radius, 1),
       materials[i % materials.length],
     );
 
-    const angle = (i / lobes) * Math.PI * 2 + rand() * .35;
-    const ring = i === 0 ? 0 : (.18 + rand() * .12) * scale;
+    const angle = (i / lobes) * Math.PI * 2 + rand() * .28;
+    const ring = i === 0 ? 0 : (.12 + rand() * .12) * scale;
 
     leafMass.position.set(
       Math.cos(angle) * ring,
-      (.18 + rand() * .18) * scale,
+      (.12 + rand() * .12) * scale,
       Math.sin(angle) * ring,
     );
 
     leafMass.scale.set(
-      1.0 + rand() * .30,
-      .78 + rand() * .28,
-      1.0 + rand() * .30,
+      1.10 + rand() * .26,
+      .52 + rand() * .18,
+      .92 + rand() * .24,
     );
 
     leafMass.rotation.set(
-      rand() * .28,
+      rand() * .18,
       rand() * Math.PI,
-      rand() * .22,
+      (rand() - .5) * .18,
     );
 
     leafMass.castShadow = true;
@@ -940,14 +940,12 @@ function addHeroStonePath(group, materials, rand) {
 
 function addLushBorder(group, materials, rand) {
   const bushes = [
-    [-3.24,  1.54, .72], [-2.78,  2.02, .62], [-2.12, 2.22, .56],
-    [-1.35,  2.28, .52], [-.48,  2.31, .50], [.46, 2.29, .50],
-    [1.36,   2.20, .54], [2.18,  2.00, .62], [2.88, 1.56, .66],
-    [3.24,    .86, .58], [3.28,  -.02, .54], [3.10,-.88, .58],
-    [2.68,  -1.62, .66], [1.96, -2.02, .62], [1.08,-2.22, .54],
-    [.10,   -2.30, .50], [-.90,-2.29, .52], [-1.84,-2.18, .58],
-    [-2.62, -1.92, .64], [-3.12,-1.30, .60], [-3.38,-.48, .54],
-    [-3.42,   .42, .56],
+    [-3.18,  1.42, .58], [-2.58,  2.02, .50], [-1.66, 2.28, .46],
+    [-.62,   2.34, .44], [.58,   2.30, .44], [1.70, 2.18, .48],
+    [2.62,   1.72, .54], [3.20,   .84, .48], [3.16,-.48, .46],
+    [2.78,  -1.54, .54], [1.78, -2.10, .50], [.54, -2.30, .44],
+    [-.82,  -2.28, .46], [-2.08,-2.10, .50], [-2.92,-1.54,.54],
+    [-3.34,  -.36, .48],
   ];
 
   bushes.forEach(([x, z, scale], index) => {
@@ -972,10 +970,9 @@ function addLushBorder(group, materials, rand) {
   });
 
   const interiorGrass = [
-    [-2.72, 1.12, .74], [-2.36,-1.34,.68], [-1.68,1.72,.60],
-    [-1.28,-1.62,.62], [-.55,1.82,.58], [.20,-1.60,.58],
-    [.84,1.80,.56], [1.58,-1.55,.62], [2.18,1.48,.60],
-    [2.48,-1.26,.62],
+    [-2.72, 1.18, .66], [-2.34,-1.36,.58], [-1.54,1.72,.52],
+    [-1.18,-1.64,.54], [-.46,1.86,.50], [.10,-1.58,.50],
+    [1.86,1.62,.50], [2.42,-1.30,.54],
   ];
 
   interiorGrass.forEach(([x, z, scale]) => {
