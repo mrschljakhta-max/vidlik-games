@@ -300,7 +300,7 @@ const CORE_PLAY_SCALE = .72;
 
 const robot = createRobot(materials);
 robot.position.set(-2.75, .90, .30);
-robot.scale.setScalar(.68);
+robot.scale.setScalar(.56);
 scene.add(robot);
 
 const coreEntries = level01.cores.map((config) => {
