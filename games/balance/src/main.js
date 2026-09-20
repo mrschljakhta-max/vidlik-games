@@ -339,10 +339,6 @@ addExternalEnvironmentAssets(scene, materials, {
   console.warn('VIDLIK: external environment pass failed', error);
 });
 
-addExternalNatureAssets(scene, materials).catch((error) => {
-  console.warn('VIDLIK: external nature pass failed', error);
-});
-
 const cable = createEnergyCable(materials);
 scene.add(cable);
 
