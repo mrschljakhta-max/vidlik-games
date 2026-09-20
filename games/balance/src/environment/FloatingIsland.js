@@ -251,24 +251,21 @@ function createSurfaceVariation(group) {
 
 function createSoftEdgeStones(group, materials, rand) {
   const positions = [
-    [-3.25, 2.22, .48, .22],
-    [-2.20, 2.43, .44, -.08],
-    [-1.12, 2.45, .42, .15],
-    [.06, 2.50, .46, -.10],
-    [1.18, 2.42, .42, .12],
-    [2.30, 2.20, .48, -.14],
-    [3.20, 1.72, .42, .20],
-    [3.48, .68, .38, -.20],
-    [3.44, -.70, .42, .10],
-    [3.06, -1.86, .46, -.12],
-    [2.00, -2.35, .44, .08],
-    [.82, -2.46, .42, -.10],
-    [-.54, -2.45, .46, .14],
-    [-1.78, -2.42, .42, -.08],
-    [-2.88, -2.20, .46, .12],
-    [-3.46, -1.28, .40, -.15],
-    [-3.55, .02, .38, .12],
-    [-3.46, 1.18, .42, -.12],
+    [-3.30, 2.08, .58, .18],
+    [-2.12, 2.44, .42, -.10],
+    [-.88,  2.50, .52, .14],
+    [.62,   2.48, .38, -.12],
+    [2.04,  2.22, .56, .10],
+    [3.18,  1.58, .44, .18],
+    [3.52,   .40, .34, -.16],
+    [3.36, -1.08, .52, .12],
+    [2.54, -2.06, .40, -.10],
+    [1.16, -2.44, .54, .08],
+    [-.42, -2.48, .36, -.12],
+    [-1.84,-2.38, .58, .12],
+    [-3.02,-1.90, .42, -.12],
+    [-3.50, -.72, .54, .14],
+    [-3.50,  .62, .36, -.10],
   ];
 
   const material = materials.rock.clone();
@@ -435,15 +432,32 @@ function createLocalCliffMass(group, materials, rand) {
   lowerB.receiveShadow = true;
   group.add(lowerB);
 
-  const tip = new THREE.Mesh(
-    new THREE.ConeGeometry(.62, .82, 7),
-    dark,
-  );
-  tip.position.set(-.10, -3.55, .00);
-  tip.rotation.y = -.16;
-  tip.castShadow = true;
-  tip.receiveShadow = true;
-  group.add(tip);
+  // Broad lower cluster instead of a single cone-shaped stalactite.
+  const lowerCluster = [
+    [-.86, -3.10,  .24, .82, .72, .70, .36, dark],
+    [ .04, -3.18,  .18, .94, .82, .78, 1.04, dark],
+    [ .86, -3.05, -.12, .74, .68, .70, 1.76, mid],
+    [-.38, -3.68, -.06, .62, .58, .56, 2.38, dark],
+    [ .38, -3.62,  .02, .58, .54, .54, 3.12, dark],
+  ];
+
+  lowerCluster.forEach(([x, y, z, sx, sy, sz, yaw, material]) => {
+    const rock = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(1, 0),
+      material,
+    );
+
+    rock.scale.set(sx, sy, sz);
+    rock.position.set(x, y, z);
+    rock.rotation.set(
+      (rand() - .5) * .08,
+      yaw + (rand() - .5) * .16,
+      (rand() - .5) * .10,
+    );
+    rock.castShadow = true;
+    rock.receiveShadow = true;
+    group.add(rock);
+  });
 }
 
 function createStonePath(group, material, rand) {
