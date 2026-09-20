@@ -284,12 +284,13 @@ function addArchitectureGate(
     goldStrip.position.set(side * .96, 1.28, .33);
     pier.add(goldStrip);
 
+    pier.position.set(doorPosition.x, 0, doorPosition.z);
     target.add(pier);
   });
 
   // A compact crown stone keeps the silhouette monumental but symmetrical.
   const crown = new THREE.Mesh(
-    new THREE.BoxGeometry(2.88, .24, .66),
+    new THREE.BoxGeometry(2.54, .22, .64),
     stone,
   );
   crown.position.set(
