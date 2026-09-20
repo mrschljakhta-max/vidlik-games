@@ -166,8 +166,8 @@ function updateOrientationGate() {
 document.querySelector('#restart').addEventListener('click', () => location.reload());
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x91c5ef);
-scene.fog = new THREE.FogExp2(0xd5ebfb, .014);
+scene.background = new THREE.Color(0x8fc5ee);
+scene.fog = new THREE.FogExp2(0xd7ecfb, .011);
 
 const camera = new THREE.PerspectiveCamera(
   38,
@@ -186,15 +186,15 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(host.clientWidth, host.clientHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.34;
+renderer.toneMappingExposure = 1.18;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 host.append(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0xf4fbff, 0x516273, 3.4));
+scene.add(new THREE.HemisphereLight(0xf6fbff, 0x4a5964, 2.35));
 
-const sun = new THREE.DirectionalLight(0xffe6b5, 6.4);
-sun.position.set(8.5, 11.5, 5.5);
+const sun = new THREE.DirectionalLight(0xffd79d, 5.9);
+sun.position.set(7.8, 12.2, 6.4);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 sun.shadow.camera.left = -10;
@@ -203,19 +203,19 @@ sun.shadow.camera.top = 10;
 sun.shadow.camera.bottom = -10;
 scene.add(sun);
 
-const skyFill = new THREE.PointLight(0x88dfff, 6.2, 12, 2);
-skyFill.position.set(-3.0, 4.0, 2.8);
+const skyFill = new THREE.PointLight(0x8ddfff, 3.4, 12, 2);
+skyFill.position.set(-3.8, 4.6, 3.2);
 scene.add(skyFill);
 
-const warmFill = new THREE.PointLight(0xffc06b, 6.6, 10, 2);
-warmFill.position.set(4.1, 3.1, 2.8);
+const warmFill = new THREE.PointLight(0xffb95d, 4.8, 10, 2);
+warmFill.position.set(4.0, 2.8, 2.3);
 scene.add(warmFill);
 
-const rimLight = new THREE.PointLight(0xffe0a2, 3.4, 9, 2);
+const rimLight = new THREE.PointLight(0xffe6b8, 2.5, 9, 2);
 rimLight.position.set(-4.2, 2.4, -2.8);
 scene.add(rimLight);
 
-const portalAccent = new THREE.PointLight(0x5fe7ff, 2.4, 7, 2);
+const portalAccent = new THREE.PointLight(0x5fe7ff, 1.8, 7, 2);
 portalAccent.position.set(3.4, 1.4, -1.3);
 scene.add(portalAccent);
 
