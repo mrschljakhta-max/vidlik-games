@@ -458,26 +458,6 @@ function createStonePath(group, material, rand) {
     polygonOffsetFactor: -2,
   });
 
-  const pathMaterial = material.clone();
-  pathMaterial.color.setHex(0xcfc3aa);
-  pathMaterial.roughness = .96;
-  pathMaterial.metalness = 0;
-
-  const stones = [
-    [-2.72, .16, .35, .54, .38, -.10],
-    [-2.20, .16, .28, .58, .40,  .10],
-    [-1.64, .15, .22, .56, .38, -.06],
-    [-1.10, .14, .18, .60, .42,  .08],
-    [-.52,  .14, .20, .58, .40, -.04],
-    [.05,   .14, .22, .60, .42,  .06],
-    [.62,   .14, .28, .58, .40, -.06],
-    [1.14,  .14, .38, .56, .40,  .08],
-    [1.58,  .14, .58, .54, .38, -.12],
-    [1.98,  .14, .84, .52, .36, -.22],
-    [2.34,  .14, 1.10, .50, .34, -.32],
-    [2.64,  .14, 1.38, .48, .32, -.38],
-  ];
-
   const trailShape = new THREE.Shape();
   trailShape.moveTo(-2.92, .28);
   trailShape.bezierCurveTo(-1.85, .08, -.65, .08, .42, .20);
@@ -496,34 +476,6 @@ function createStonePath(group, material, rand) {
   trail.renderOrder = 1;
   group.add(trail);
 
-  stones.forEach(([x, y, z, sx, sz, rotation], index) => {
-    const stone = new THREE.Mesh(
-      new THREE.CylinderGeometry(
-        .50,
-        .54,
-        .08,
-        7 + (index % 3),
-      ),
-      pathMaterial,
-    );
-
-    stone.scale.set(
-      sx * (.92 + rand() * .14),
-      1,
-      sz * (.92 + rand() * .14),
-    );
-
-    stone.position.set(
-      x + (rand() - .5) * .05,
-      y + rand() * .012,
-      z + (rand() - .5) * .04,
-    );
-
-    stone.rotation.y = rotation + (rand() - .5) * .08;
-    stone.castShadow = true;
-    stone.receiveShadow = true;
-    group.add(stone);
-  });
 }
 
 
@@ -790,7 +742,6 @@ export function createFloatingIsland(baseMaterials) {
 
   createSoftEdgeStones(island, materials, rand);
   createStonePath(island, materials.path, rand);
-  createEdgeGrassTufts(island);
   createDoorFoundation(island, materials);
   createGeneratorFoundation(island, materials);
 
