@@ -818,18 +818,24 @@ function addHeroStonePath(group, materials, rand) {
   stoneMaterial.metalness = 0;
 
   const path = [
+    // Core / robot side -> generator.
     [-2.72, .21, .34, .34, -.10],
     [-2.24, .21, .29, .38,  .08],
     [-1.74, .21, .25, .36, -.05],
-    [-1.24, .21, .23, .39,  .09],
-    [-.72,  .21, .22, .37, -.06],
-    [-.18,  .21, .25, .39,  .04],
-    [.38,   .21, .30, .38, -.06],
-    [.92,   .21, .39, .37,  .08],
-    [1.46,  .21, .54, .36, -.10],
-    [1.94,  .21, .76, .34, -.17],
-    [2.31,  .21, 1.02, .33, -.24],
-    [2.60,  .21, 1.30, .31, -.30],
+    [-1.24, .21, .24, .39,  .09],
+    [-.72,  .21, .28, .37, -.06],
+    [-.22,  .21, .42, .38,  .06],
+    [.16,   .21, .72, .35,  .12],
+
+    // Around the generator toward the gate.
+    [.52,   .21, 1.12, .33,  .18],
+    [1.02,  .21, 1.42, .34,  .08],
+    [1.56,  .21, 1.34, .35, -.10],
+    [2.02,  .21, 1.02, .34, -.22],
+    [2.38,  .21, .58, .33, -.34],
+    [2.68,  .21, .12, .32, -.40],
+    [2.92,  .21,-.36, .31, -.46],
+    [3.08,  .21,-.78, .30, -.48],
   ];
 
   path.forEach(([x, y, z, scale, yaw], index) => {
@@ -985,17 +991,70 @@ function addHeroRockAccents(group, materials, rand) {
 }
 
 function addGateGreenery(group, rand) {
-  const placements = [
+  const groundPlacements = [
     [2.58, -.92, .52],
     [2.72, -.48, .46],
     [2.52, -.10, .42],
     [2.94, -1.62, .48],
   ];
 
-  placements.forEach(([x, z, scale]) => {
+  groundPlacements.forEach(([x, z, scale]) => {
     const bush = createShrubCluster(rand, scale, 'green');
     bush.position.set(x, .14, z);
     group.add(bush);
+  });
+
+  // Green crown and ivy around the door frame.
+  const crownPlacements = [
+    [2.74, 2.76, -1.16, .38],
+    [3.16, 2.90, -1.16, .42],
+    [3.72, 2.88, -1.16, .42],
+    [4.10, 2.72, -1.16, .36],
+    [2.58, 2.12, -1.12, .28],
+    [4.26, 2.08, -1.12, .28],
+  ];
+
+  crownPlacements.forEach(([x, y, z, scale], index) => {
+    const bush = createShrubCluster(
+      rand,
+      scale,
+      index % 3 === 0 ? 'light' : 'green',
+    );
+    bush.position.set(x, y, z);
+    group.add(bush);
+  });
+
+  const ivyMaterial = new THREE.MeshStandardMaterial({
+    color: 0x5c963f,
+    roughness: 1,
+  });
+
+  [
+    [2.66, 2.62, -1.05, .90],
+    [4.18, 2.64, -1.05, .78],
+    [3.98, 2.76, -1.05, .56],
+  ].forEach(([x, y, z, length], vineIndex) => {
+    const vine = new THREE.Group();
+    const pieces = 7;
+
+    for (let i = 0; i < pieces; i += 1) {
+      const leaf = new THREE.Mesh(
+        new THREE.SphereGeometry(.075, 7, 5),
+        ivyMaterial,
+      );
+
+      leaf.scale.set(1.0, .42, .68);
+      leaf.position.set(
+        Math.sin(i * 1.25 + vineIndex) * .07,
+        -i * (length / pieces),
+        0,
+      );
+      leaf.rotation.z = i % 2 ? .55 : -.55;
+      vine.add(leaf);
+    }
+
+    vine.position.set(x, y, z);
+    group.add(vine);
   });
 }
 
