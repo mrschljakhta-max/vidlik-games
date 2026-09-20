@@ -132,11 +132,12 @@ function recolorFoliage(root, mode = 'green') {
       }
     }
 
-    material.map = null;
-    material.alphaMap = null;
-    material.transparent = false;
-    material.opacity = 1;
     material.roughness = Math.max(material.roughness ?? .8, .90);
+    if (material.transparent || material.alphaMap) {
+      material.transparent = true;
+      material.alphaTest = Math.max(material.alphaTest ?? 0, .18);
+      material.depthWrite = true;
+    }
     material.metalness = 0;
     material.needsUpdate = true;
 
@@ -334,6 +335,62 @@ function addAccentPlants(target, plant) {
   });
 }
 
+function addRockPath(target, pathAssets, materials) {
+  const placements = [
+    [-2.90, .12, .38, .54, -.18],
+    [-2.38, .12, .32, .56, .08],
+    [-1.84, .12, .27, .52, -.10],
+    [-1.30, .12, .24, .58, .12],
+    [-.74,  .12, .22, .54, -.08],
+    [-.18,  .12, .23, .58, .06],
+    [.40,   .12, .28, .54, -.08],
+    [.96,   .12, .36, .54, .10],
+    [1.46,  .12, .50, .52, -.12],
+    [1.90,  .12, .72, .50, -.20],
+    [2.28,  .12, .98, .48, -.28],
+    [2.60,  .12, 1.28, .46, -.34],
+  ];
+
+  placements.forEach(([x, y, z, size, yaw], index) => {
+    const source = pathAssets[index % pathAssets.length];
+    place(target, source, {
+      position: [x, y, z],
+      size,
+      rotation: [0, yaw, 0],
+      scale: [1.08, .38, .92],
+      transform: (object) => recolorRock(object, materials, index % 5 === 0),
+    });
+  });
+}
+
+function addGroundCover(target, assets) {
+  const placements = [
+    [-3.05, .10, 1.72, .20, .2, 0],
+    [-2.55, .10, 1.95, .18, 1.1, 1],
+    [-2.10, .10, -1.84, .18, 2.0, 2],
+    [-1.55, .10, 1.86, .17, .6, 3],
+    [-.80,  .10, -1.82, .17, 1.5, 1],
+    [-.20,  .10, 1.95, .18, 2.6, 0],
+    [.58,   .10, -1.78, .17, .4, 2],
+    [1.20,  .10, 1.86, .18, 1.8, 3],
+    [1.88,  .10, 1.62, .18, 2.8, 0],
+    [2.38,  .10, -1.72, .18, .9, 1],
+    [2.88,  .10, .74, .17, 1.4, 2],
+    [-3.08, .10, -.52, .17, 2.2, 3],
+  ];
+
+  placements.forEach(([x, y, z, size, yaw, variant]) => {
+    const source = assets[variant % assets.length];
+    place(target, source, {
+      position: [x, y, z],
+      size,
+      rotation: [0, yaw, 0],
+      scale: [.94, 1.04, .94],
+      transform: (object) => recolorFoliage(object, 'green'),
+    });
+  });
+}
+
 function addCredits(root) {
   root.userData.externalAssetCredits = [
     {
@@ -350,6 +407,14 @@ function addCredits(root) {
         'Grass_Common_Tall',
         'Grass_Wispy_Short',
         'Plant_1_Big',
+        'Grass_Common_Short',
+        'Grass_Wispy_Tall',
+        'Fern_1',
+        'Clover_1',
+        'RockPath_Round_Small_1',
+        'RockPath_Round_Small_2',
+        'RockPath_Round_Small_3',
+        'RockPath_Round_Wide',
       ],
     },
   ];
@@ -373,6 +438,14 @@ export async function addExternalNatureAssets(
     'Grass_Common_Tall',
     'Grass_Wispy_Short',
     'Plant_1_Big',
+    'Grass_Common_Short',
+    'Grass_Wispy_Tall',
+    'Fern_1',
+    'Clover_1',
+    'RockPath_Round_Small_1',
+    'RockPath_Round_Small_2',
+    'RockPath_Round_Small_3',
+    'RockPath_Round_Wide',
   ];
 
   const results = await Promise.allSettled(
@@ -423,6 +496,28 @@ export async function addExternalNatureAssets(
 
   if (plant) {
     addAccentPlants(root, plant);
+  }
+
+  const pathAssets = [
+    loaded.get('RockPath_Round_Small_1'),
+    loaded.get('RockPath_Round_Small_2'),
+    loaded.get('RockPath_Round_Small_3'),
+    loaded.get('RockPath_Round_Wide'),
+  ].filter(Boolean);
+
+  if (pathAssets.length) {
+    addRockPath(root, pathAssets, materials);
+  }
+
+  const groundCover = [
+    loaded.get('Grass_Common_Short'),
+    loaded.get('Grass_Wispy_Tall'),
+    loaded.get('Fern_1'),
+    loaded.get('Clover_1'),
+  ].filter(Boolean);
+
+  if (groundCover.length) {
+    addGroundCover(root, groundCover);
   }
 
   return root;
