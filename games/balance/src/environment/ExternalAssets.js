@@ -207,8 +207,6 @@ function addArchitectureGate(
   target,
   {
     doorFrame,
-    support,
-    wallArch,
     wallLantern,
   },
   materials,
@@ -219,53 +217,98 @@ function addArchitectureGate(
 ) {
   if (!doorFrame) return false;
 
+  const stone = materials.stone.clone();
+  stone.color.setHex(0xa79b84);
+  stone.roughness = .96;
+  stone.metalness = 0;
+
+  const stoneDark = materials.rockDark.clone();
+  stoneDark.color.setHex(0x6e665b);
+  stoneDark.roughness = .98;
+  stoneDark.metalness = 0;
+
+  const gold = materials.gold.clone();
+  gold.emissiveIntensity = 1.05;
+
   const frame = placeNormalized(target, doorFrame, {
     position: [doorPosition.x, .02, doorPosition.z - .02],
-    size: 3.45,
+    size: 3.28,
     rotation: [0, 0, 0],
-    scale: [1.02, 1.02, .82],
+    scale: [1.04, 1.00, .78],
     transform: (object) => recolorArchitecture(object, materials),
   });
 
   frame.name = 'AssetGate_DoorFrame';
 
-  if (support) {
-    [
-      [doorPosition.x - 1.34, .02, doorPosition.z + .02, -.04],
-      [doorPosition.x + 1.34, .02, doorPosition.z + .02, .04],
-    ].forEach(([x, y, z, rz], index) => {
-      placeNormalized(target, support, {
-        position: [x, y, z],
-        size: 1.48,
-        rotation: [0, index ? Math.PI : 0, rz],
-        scale: [.82, 1.25, .84],
-        transform: (object) => recolorArchitecture(
-          object,
-          materials,
-          { dark: index === 1 },
-        ),
-      });
-    });
-  }
+  // Deterministic, symmetrical stone piers on both sides of the imported arch.
+  const pierX = 1.30;
+  const pierHeight = 2.46;
+  const blockHeight = .42;
+  const blockCount = 6;
 
-  if (wallArch) {
-    placeNormalized(target, wallArch, {
-      position: [doorPosition.x, 2.46, doorPosition.z - .10],
-      size: 1.62,
-      rotation: [0, 0, 0],
-      scale: [1.34, .70, .72],
-      transform: (object) => recolorArchitecture(object, materials),
-    });
-  }
+  [-1, 1].forEach((side) => {
+    const pier = new THREE.Group();
+    pier.name = side < 0 ? 'AssetGate_PierLeft' : 'AssetGate_PierRight';
+
+    for (let i = 0; i < blockCount; i += 1) {
+      const block = new THREE.Mesh(
+        new THREE.BoxGeometry(.68, blockHeight, .58),
+        i % 2 ? stoneDark : stone,
+      );
+
+      block.position.set(
+        side * pierX,
+        .22 + i * blockHeight,
+        .02,
+      );
+
+      block.rotation.z = side * (i % 2 ? -.012 : .012);
+      block.castShadow = true;
+      block.receiveShadow = true;
+      pier.add(block);
+    }
+
+    const cap = new THREE.Mesh(
+      new THREE.BoxGeometry(.90, .22, .72),
+      stone,
+    );
+    cap.position.set(side * pierX, pierHeight + .04, .02);
+    cap.castShadow = true;
+    cap.receiveShadow = true;
+    pier.add(cap);
+
+    const goldStrip = new THREE.Mesh(
+      new THREE.BoxGeometry(.055, 1.92, .05),
+      gold.clone(),
+    );
+    goldStrip.position.set(side * .96, 1.28, .33);
+    pier.add(goldStrip);
+
+    target.add(pier);
+  });
+
+  // A compact crown stone keeps the silhouette monumental but symmetrical.
+  const crown = new THREE.Mesh(
+    new THREE.BoxGeometry(2.88, .24, .66),
+    stone,
+  );
+  crown.position.set(
+    doorPosition.x,
+    2.74,
+    doorPosition.z + .02,
+  );
+  crown.castShadow = true;
+  crown.receiveShadow = true;
+  target.add(crown);
 
   if (wallLantern) {
     [
-      [doorPosition.x - 1.02, 1.34, doorPosition.z + .34, 0],
-      [doorPosition.x + 1.02, 1.34, doorPosition.z + .34, Math.PI],
+      [doorPosition.x - 1.00, 1.28, doorPosition.z + .36, 0],
+      [doorPosition.x + 1.00, 1.28, doorPosition.z + .36, Math.PI],
     ].forEach(([x, y, z, yaw]) => {
       const lamp = placeNormalized(target, wallLantern, {
         position: [x, y, z],
-        size: .62,
+        size: .54,
         rotation: [0, yaw, 0],
       });
 
@@ -276,8 +319,8 @@ function addArchitectureGate(
         child.material = material;
       });
 
-      const light = new THREE.PointLight(0xffb34d, 2.8, 3.0, 2);
-      light.position.set(x, y + .12, z + .18);
+      const light = new THREE.PointLight(0xffb34d, 2.5, 3.2, 2);
+      light.position.set(x, y + .10, z + .20);
       target.add(light);
     });
   }
