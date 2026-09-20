@@ -88,9 +88,9 @@ function createGrassTexture() {
       const noise = (rand() - .5) * 8;
       const variation = broad + noise;
 
-      image.data[i] = Math.max(0, Math.min(255, 104 + variation * .85));
-      image.data[i + 1] = Math.max(0, Math.min(255, 170 + variation * 1.25));
-      image.data[i + 2] = Math.max(0, Math.min(255, 72 + variation * .62));
+      image.data[i] = Math.max(0, Math.min(255, 86 + variation * .72));
+      image.data[i + 1] = Math.max(0, Math.min(255, 158 + variation * 1.20));
+      image.data[i + 2] = Math.max(0, Math.min(255, 58 + variation * .52));
       image.data[i + 3] = 255;
     }
   }
@@ -99,9 +99,9 @@ function createGrassTexture() {
 
   // Very soft broad tinting. No tiles, squares or visible repeating cells.
   const gradients = [
-    [130, 125, 120, 'rgba(194,206,104,.12)'],
-    [390, 155, 150, 'rgba(76,128,52,.11)'],
-    [275, 385, 135, 'rgba(171,193,82,.10)'],
+    [130, 125, 120, 'rgba(170,196,92,.16)'],
+    [390, 155, 150, 'rgba(61,112,42,.14)'],
+    [275, 385, 135, 'rgba(140,175,70,.12)'],
   ];
 
   gradients.forEach(([x, y, radius, color]) => {
@@ -125,8 +125,8 @@ function createGrassTexture() {
 function createSmoothGrassMaterial() {
   return new THREE.MeshStandardMaterial({
     map: createGrassTexture(),
-    color: 0xffffff,
-    roughness: .96,
+    color: 0xeef7df,
+    roughness: .98,
     metalness: 0,
     side: THREE.DoubleSide,
   });
@@ -451,9 +451,9 @@ function createStonePath(group, material, rand) {
   // the generator and then the gate. The route is intentionally curved
   // and irregular so it reads as a path, not a tiled grid.
   const dirtMaterial = new THREE.MeshBasicMaterial({
-    color: 0x84745d,
+    color: 0x6d674f,
     transparent: true,
-    opacity: .16,
+    opacity: .10,
     depthWrite: false,
     polygonOffset: true,
     polygonOffsetFactor: -2,
@@ -601,6 +601,62 @@ function createEdgeGrassTufts(group) {
     tuft.rotation.y = rot + (index % 3) * .18;
     group.add(tuft);
   });
+}
+
+
+function addSurfaceZones(group) {
+  const generatorZone = new THREE.Mesh(
+    new THREE.RingGeometry(1.10, 1.72, 64),
+    new THREE.MeshBasicMaterial({
+      color: 0x736a55,
+      transparent: true,
+      opacity: .20,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -3,
+      side: THREE.DoubleSide,
+    }),
+  );
+  generatorZone.rotation.x = -Math.PI / 2;
+  generatorZone.position.set(1.30, .133, .50);
+  generatorZone.renderOrder = 2;
+  group.add(generatorZone);
+
+  const gateApron = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.35, 1.18),
+    new THREE.MeshBasicMaterial({
+      color: 0x948a76,
+      transparent: true,
+      opacity: .24,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -3,
+      side: THREE.DoubleSide,
+    }),
+  );
+  gateApron.rotation.x = -Math.PI / 2;
+  gateApron.position.set(3.18, .134, -.68);
+  gateApron.rotation.z = -.04;
+  gateApron.renderOrder = 2;
+  group.add(gateApron);
+
+  const wornPatch = new THREE.Mesh(
+    new THREE.CircleGeometry(.78, 40),
+    new THREE.MeshBasicMaterial({
+      color: 0x7b725f,
+      transparent: true,
+      opacity: .14,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -3,
+      side: THREE.DoubleSide,
+    }),
+  );
+  wornPatch.rotation.x = -Math.PI / 2;
+  wornPatch.position.set(-2.05, .132, .36);
+  wornPatch.scale.set(1.45, .72, 1);
+  wornPatch.renderOrder = 2;
+  group.add(wornPatch);
 }
 
 function createDoorFoundation(group, materials) {
@@ -1071,6 +1127,7 @@ export function createFloatingIsland(baseMaterials) {
 
   createSoftEdgeStones(island, materials, rand);
   createStonePath(island, materials.path, rand);
+  addSurfaceZones(island);
   addHeroStonePath(island, materials, rand);
   addHeroRockAccents(island, materials, rand);
   addLushBorder(island, materials, rand);
