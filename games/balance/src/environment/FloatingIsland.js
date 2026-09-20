@@ -88,9 +88,9 @@ function createGrassTexture() {
       const noise = (rand() - .5) * 8;
       const variation = broad + noise;
 
-      image.data[i] = Math.max(0, Math.min(255, 86 + variation * .72));
-      image.data[i + 1] = Math.max(0, Math.min(255, 158 + variation * 1.20));
-      image.data[i + 2] = Math.max(0, Math.min(255, 58 + variation * .52));
+      image.data[i] = Math.max(0, Math.min(255, 92 + variation * .70));
+      image.data[i + 1] = Math.max(0, Math.min(255, 176 + variation * 1.18));
+      image.data[i + 2] = Math.max(0, Math.min(255, 64 + variation * .50));
       image.data[i + 3] = 255;
     }
   }
@@ -125,7 +125,7 @@ function createGrassTexture() {
 function createSmoothGrassMaterial() {
   return new THREE.MeshStandardMaterial({
     map: createGrassTexture(),
-    color: 0xeef7df,
+    color: 0xc8efaa,
     roughness: .98,
     metalness: 0,
     side: THREE.DoubleSide,
@@ -939,43 +939,59 @@ function addHeroStonePath(group, materials, rand) {
 }
 
 function addLushBorder(group, materials, rand) {
-  const bushes = [
-    [-3.18,  1.42, .58], [-2.58,  2.02, .50], [-1.66, 2.28, .46],
-    [-.62,   2.34, .44], [.58,   2.30, .44], [1.70, 2.18, .48],
-    [2.62,   1.72, .54], [3.20,   .84, .48], [3.16,-.48, .46],
-    [2.78,  -1.54, .54], [1.78, -2.10, .50], [.54, -2.30, .44],
-    [-.82,  -2.28, .46], [-2.08,-2.10, .50], [-2.92,-1.54,.54],
-    [-3.34,  -.36, .48],
+  // Four intentional vegetation masses instead of evenly scattered dots.
+  const clusters = [
+    { center: [-2.92, 1.72], points: [
+      [-.18, -.10, .54], [.18, .10, .46], [.02, .30, .42], [.30, -.16, .38],
+    ]},
+    { center: [-2.78, -1.56], points: [
+      [-.18, .08, .50], [.14, -.10, .44], [.26, .18, .38],
+    ]},
+    { center: [.32, 2.16], points: [
+      [-.28, .04, .44], [.06, .12, .50], [.34, -.04, .42],
+    ]},
+    { center: [2.62, -1.54], points: [
+      [-.24, .06, .46], [.10, -.06, .52], [.30, .18, .40],
+    ]},
   ];
 
-  bushes.forEach(([x, z, scale], index) => {
-    const bush = createShrubCluster(
-      rand,
-      scale,
-      index % 4 === 0 ? 'light' : 'green',
-    );
-    bush.position.set(x, .14, z);
-    bush.rotation.y = rand() * Math.PI * 2;
-    group.add(bush);
-
-    if (index % 2 === 0) {
-      const grass = createGrassCluster(rand, scale * .86);
-      grass.position.set(
-        x + (rand() - .5) * .30,
-        .13,
-        z + (rand() - .5) * .30,
+  clusters.forEach((cluster, clusterIndex) => {
+    cluster.points.forEach(([dx, dz, scale], index) => {
+      const bush = createShrubCluster(
+        rand,
+        scale,
+        (clusterIndex + index) % 3 === 0 ? 'light' : 'green',
       );
-      group.add(grass);
-    }
+      bush.position.set(
+        cluster.center[0] + dx,
+        .14,
+        cluster.center[1] + dz,
+      );
+      bush.rotation.y = rand() * Math.PI * 2;
+      group.add(bush);
+
+      if (index === 0 || index === 2) {
+        const grass = createGrassCluster(rand, scale * .78);
+        grass.position.set(
+          cluster.center[0] + dx + (rand() - .5) * .18,
+          .13,
+          cluster.center[1] + dz + (rand() - .5) * .18,
+        );
+        group.add(grass);
+      }
+    });
   });
 
-  const interiorGrass = [
-    [-2.72, 1.18, .66], [-2.34,-1.36,.58], [-1.54,1.72,.52],
-    [-1.18,-1.64,.54], [-.46,1.86,.50], [.10,-1.58,.50],
-    [1.86,1.62,.50], [2.42,-1.30,.54],
+  const edgeGrass = [
+    [-1.70, 2.18, .48],
+    [1.58, 2.02, .46],
+    [3.02, .74, .44],
+    [1.36, -2.02, .48],
+    [-.64, -2.16, .46],
+    [-3.18, -.40, .44],
   ];
 
-  interiorGrass.forEach(([x, z, scale]) => {
+  edgeGrass.forEach(([x, z, scale]) => {
     const grass = createGrassCluster(rand, scale);
     grass.position.set(x, .13, z);
     grass.rotation.y = rand() * Math.PI * 2;
