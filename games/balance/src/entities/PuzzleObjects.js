@@ -565,6 +565,14 @@ export function createDoor(materials) {
     runeDiamond,
     portal,
     portalLight,
+    shellParts: [
+      pillarL,
+      pillarR,
+      archTop,
+      capL,
+      capR,
+      runeBase,
+    ],
   };
 
   return group;

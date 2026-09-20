@@ -334,6 +334,7 @@ scene.add(door);
 
 addExternalEnvironmentAssets(scene, materials, {
   doorPosition: door.position.clone(),
+  doorObject: door,
 }).catch((error) => {
   console.warn('VIDLIK: external environment pass failed', error);
 });
